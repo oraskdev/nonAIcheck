@@ -1,0 +1,64 @@
+{
+  "url": "https://txtzi.onrender.com",
+  "tested_at": "2026-10-01T18:54:45Z",
+  "checks": [
+    "Public health check and PostgreSQL connection",
+    "New account immediately receives 500 weekly credits",
+    "DOCX upload, extraction and upfront 399-credit quote",
+    "Repeated generation request charges only once",
+    "Claude, OpenAI and Grok complete on the live Render worker",
+    "Live PDF, DOCX, PPTX and TXT exports",
+    "Unauthenticated document access rejected",
+    "Administrator account created and admin dashboard access verified"
+  ],
+  "provider_usage": [
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-5-20250929",
+      "section": 1,
+      "input_tokens": 768,
+      "output_tokens": 285
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4.1-mini",
+      "section": 1,
+      "input_tokens": 741,
+      "output_tokens": 214
+    },
+    {
+      "provider": "xai",
+      "model": "grok-4.3",
+      "section": 1,
+      "input_tokens": 910,
+      "output_tokens": 211
+    }
+  ],
+  "changed_blocks": 2,
+  "config": {
+    "name": "txtzi",
+    "ai_ready": true,
+    "payments_ready": false,
+    "detector_ready": false,
+    "recovery_ready": true,
+    "ocr_ready": true,
+    "max_words": 12000,
+    "max_file_mb": 20,
+    "retention_hours": 168,
+    "base_price": 399,
+    "extra_price": 200,
+    "detector_price": 100,
+    "ocr_price": 20,
+    "slide_price": 10,
+    "credit_packs": [
+      1000,
+      2500,
+      5000
+    ],
+    "weekly_free_credits": 500,
+    "support_email": "noreply@9orb.com"
+  },
+  "domain": "Not purchased: registrar API blocked this environment",
+  "email": "Configured, delivery not verified",
+  "payments": "Not configured"
+}

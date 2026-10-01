@@ -1,5 +1,7 @@
 # txtzi
 
+Live studio: https://txtzi.onrender.com/
+
 txtzi is a small document studio for turning a user's own draft into a clearer, newly exported document. It accepts PDF, DOC, DOCX, PPTX, TXT, and pasted text, then runs a bounded editorial pipeline through the configured language-model providers.
 
 The app is designed for legitimate self-use: it preserves facts, figures, links, and table separators; it does not promise to bypass AI detectors; it does not strip authorship or rights notices; and it shows any detector result as an estimate. Users must acknowledge the self-use declaration before processing.
@@ -23,7 +25,7 @@ Each account receives 500 promotional credits once per ISO week by default. This
 
 Push this repository to GitHub and create a Render Blueprint from `render.yaml`. After the first deploy, set `APP_URL` if a custom host is used, add the provider and Stripe secrets, and configure the Stripe webhook URL as `/api/billing/webhook`.
 
-For password recovery, set `RESEND_API_KEY`, `EMAIL_FROM`, and `SUPPORT_EMAIL` in the txtzi Render service. If another service in the same Render workspace already has the approved Resend key, copy that secret into txtzi's environment settings from the Render dashboard; The current connected tools do not expose the source service secret for automatic copying. Keep the key out of GitHub and rotate any key that has been shared in chat or committed accidentally.
+For password recovery, set `RESEND_API_KEY`, `EMAIL_FROM`, and `SUPPORT_EMAIL` in the txtzi Render service. The deployed service reuses the approved Resend key from the existing Render workspace. Email delivery still needs verification. Keep the key out of GitHub and rotate any key that has been shared in chat or committed accidentally.
 
 The Render service only reports `recovery_ready` as true when both the Resend key and a verified `EMAIL_FROM` address are present. Use a sender on a domain verified in Resend before testing password recovery.
 
