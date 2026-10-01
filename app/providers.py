@@ -1,4 +1,4 @@
-"""Three independent editing passes; no detector-optimization loop or fabricated scores."""
+"""Three independent editing passes; detector estimates come from the detector API."""
 import json
 import re
 import time
@@ -119,13 +119,14 @@ def chunks(blocks, size=6500):
         yield group
 
 
-def refine(blocks, options, on_progress):
+def refine(blocks, options, on_progress, initial=None):
     batches = list(chunks(blocks))
     completed, usage, flags = [], [], []
     tone = options.get("tone", "natural")
     depth = options.get("depth", "light")
     for index, original in enumerate(batches):
-        working = original
+        lookup = {b["id"]: b for b in initial} if initial else {}
+        working = [lookup.get(b["id"], b) for b in original]
         for step, (provider, label, instruction) in enumerate([
             ("anthropic", "Claude is refining your writing", "Improve the wording, flow and clarity. Match the selected tone and editing depth."),
             ("openai", "OpenAI is checking meaning and details", "Compare the current draft against the ORIGINAL. Correct meaning drift, omissions and altered facts or citations. Retain worthwhile wording improvements. This is source comparison, not external fact verification."),
@@ -133,6 +134,8 @@ def refine(blocks, options, on_progress):
         ]):
             position = index * 3 + step
             on_progress(10 + int(position / max(1, len(batches) * 3) * 78), f"{label} · section {index + 1}/{len(batches)}")
+            if options.get("alternate_revision"):
+                instruction += " Produce an alternative natural revision: vary repetitive sentence structure and replace generic filler with direct wording. Preserve every substantive point. Do not add deliberate errors or invisible characters."
             prompt = json.dumps({"tone": tone, "editing_depth": depth, "instruction": instruction, "original_blocks": original, "current_draft": working}, ensure_ascii=False)
             output, token_usage = invoke(provider, BASE, prompt)
             working = parse_blocks(output, original)

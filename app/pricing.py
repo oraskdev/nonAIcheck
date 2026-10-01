@@ -22,5 +22,5 @@ def quote(words, ocr_pages=0, slides=0, detector=False):
         rows.append({"label": f"Slide reconstruction · {slides}", "cents": slides * settings.slide_price})
     detector_cents = units * settings.detector_price if detector else 0
     if detector:
-        rows.append({"label": "GPTZero before / after assessment", "cents": detector_cents})
+        rows.append({"label": "GPTZero comparison · up to 2 revisions / 3 assessments", "cents": detector_cents})
     return {"total_cents": sum(r["cents"] for r in rows), "detector_cents": detector_cents, "items": rows}

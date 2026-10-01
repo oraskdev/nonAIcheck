@@ -49,3 +49,11 @@ A custom three-stroke X replaces the earlier logo. Outlined vector wordmarks inc
 Render service `srv-davaltfpn0mc73ca26ng` uses Docker Starter in Frankfurt, with dedicated PostgreSQL `dpg-davaleflk1mc739asf3g-a` on Basic 256 MB and 1 GB storage. Estimated base hosting is $13.30/month before usage; billing recurs and is not a lifetime $50 cap. The domain has not incurred a charge. Three AI keys and Resend are configured as server-only secrets. Verify email delivery and password recovery. Configure Stripe and a signed webhook before enabling paid checkout. Add the selected domain only after its registration and the service hostname are known.
 
 Never commit .env files, credentials, databases, test accounts or local runtime folders.
+
+## Detector-guided revision and hidden-format cleanup
+
+- Added a bounded workflow: measure the original, revise through three providers, measure the revision, optionally make one additional three-provider revision, and retain the lowest-scoring eligible version. No fabricated scores or unlimited retries.
+- Added a before/output Unicode-format inventory and optional removal of BOM, soft hyphen and word joiner. Language joiners and bidirectional controls remain. This does not detect statistical watermarks.
+- The result displays attempted assessments, selected version, and whether a measured reduction occurred. Unavailable assessments return the detector fee as credits.
+- Eight mocked pipeline tests cover selection, fallback, failure and language-safe cleanup. These are not live detector accuracy tests.
+- GPTZero credentials are absent. An unauthenticated trial request from the workspace received Cloudflare 1010 and was not retried. ZeroGPT.com API signup requires account creation and an API balance; no detector purchase has been made.

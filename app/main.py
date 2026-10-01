@@ -229,6 +229,7 @@ class EditOptions(BaseModel):
     depth: str = "light"
     language: str = "English"
     clean_metadata: bool = True
+    clean_hidden: bool = True
     detector: bool = False
     consent: bool = False
     provider_consent: bool = False

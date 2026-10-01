@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 
-from . import providers
+from . import providers, pipeline
 from .billing import credit_detector_fee, process_refunds, refund_document
 from .config import settings
 from .db import AuthSession, Document, Ledger, ResetToken, SessionLocal, User, WeeklyGrant, decrypt, encrypt, now, uid
@@ -39,19 +39,12 @@ def process_job(job_id, token):
                 db.commit()
                 if not result.rowcount:
                     raise RuntimeError("Job ownership changed")
-        before = {"status": "not_assessed", "reason": "An AI-detector assessment was not requested."}
-        if options.get("detector"):
-            progress(7, "Assessing the original with GPTZero")
-            before = providers.detect("\n\n".join(b["text"] for b in blocks))
-        revised, report = providers.refine(blocks, options, progress)
-        after = {"status": "not_assessed", "reason": "An AI-detector assessment was not requested."}
-        if options.get("detector"):
-            progress(91, "Assessing the revised text with GPTZero")
-            after = providers.detect("\n\n".join(b["text"] for b in revised))
+        revised, report = pipeline.run(blocks, options, progress)
+        before, after = report["before_detector"], report["after_detector"]
         report.update({"before_detector": before, "after_detector": after, "original_words": count_words("\n".join(b["text"] for b in blocks)), "revised_words": count_words("\n".join(b["text"] for b in revised)), "changed_blocks": sum(a["text"] != b["text"] for a, b in zip(blocks, revised)), "completed_at": now(), "metadata": "Fresh exports omit original author fields, comments and revision history. This is not a watermark-removal or human-authorship certification."})
         with SessionLocal() as db:
             changed = db.execute(update(Document).where(Document.id == job_id, Document.status == "processing", Document.lease_token == token).values(result=encrypt(revised), report=encrypt(report), status="completed", progress=100, stage="Your refined document is ready", lease_until=None, updated_at=now()))
-            if changed.rowcount and options.get("detector") and (before["status"] != "assessed" or after["status"] != "assessed"):
+            if changed.rowcount and options.get("detector") and report["detector_comparison"]["assessment_unavailable"]:
                 credit_detector_fee(db, db.get(Document, job_id))
             db.commit()
     except Exception as exc:
