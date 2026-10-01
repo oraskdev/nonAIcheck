@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+.local-secret
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.db
+*.db-*
+test-artifacts/
+.DS_Store
+*.zip
+*.log
+node_modules/
