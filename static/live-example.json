@@ -1,0 +1,42 @@
+{
+  "before_score": 0.999293462398949,
+  "after_score": 0.9988101720809937,
+  "tested_at": "2026-10-01T22:03:58Z",
+  "elapsed_seconds": 77.7,
+  "original": [
+    "A simpler way to plan my week",
+    "I want to establish a more effective approach to personal planning because my current routine leaves me feeling busy without a clear sense of progress. Throughout the week, I frequently move between messages, small errands, and unfinished tasks. Although each activity appears necessary at the time, the accumulated effect is that important work receives less attention than I intended.",
+    "My proposed solution is to introduce a short planning session at the beginning of each week. During this session, I will identify the responsibilities that genuinely require my attention and distinguish them from activities that can wait. Rather than creating an extensive list of ambitions, I want to select a small number of priorities that are realistic within the time available.",
+    "To support this approach, I plan to spend 30 minutes on one important task before opening my messages each morning. This period will provide an opportunity to concentrate without immediately reacting to other people's requests. I am not expecting to complete every significant task in a single sitting. The purpose is to make a deliberate start and reduce the tendency to postpone work that requires sustained attention.",
+    "Another important element of the plan is flexibility. Unexpected requests and changes in circumstances are inevitable, so filling every available hour would make the system unnecessarily fragile. I want to leave some space in the calendar and avoid interpreting a disrupted afternoon as evidence that the entire week has failed. A useful plan should help me respond to reality rather than create additional frustration.",
+    "On 12 October, I will review how the routine has worked. I intend to consider which tasks received enough attention, which estimates were unrealistic, and whether the quiet morning session was practical. These observations will guide the following week's plan. I do not want to keep repeating an approach simply because it looked organized when I first wrote it down.",
+    "Ultimately, my objective is to develop a sustainable routine that supports meaningful progress while leaving room for ordinary life. I am looking for greater clarity about what deserves attention, fewer avoidable distractions, and a more reasonable relationship with unfinished work. If a simple notebook and a brief weekly review can provide that structure, I would prefer them to another complicated productivity system.",
+    "I also recognize that the environment around me influences whether I follow the plan. A phone within easy reach makes it tempting to check messages, even when I have already decided to concentrate. Before the morning session, I will therefore put it somewhere else and keep only the materials required for the task on my desk. This is a small adjustment, but it may make the intended routine easier to maintain. If the arrangement becomes inconvenient or fails to help, I can change it after the review rather than treating it as a permanent rule. I want the process to remain practical, understandable, and simple enough to use on an ordinary busy day."
+  ],
+  "revised": [
+    "A simpler way to plan my week",
+    "My current routine keeps me busy without giving me a clear sense of progress. I move between messages, small errands, and half-finished tasks all week. Each one feels necessary in the moment, but important work gets less attention than I intended.",
+    "I'm going to try a short planning session at the start of each week. I'll figure out what genuinely needs my attention and what can wait. Instead of filling a page with ambitions, I'll pick a small number of priorities that are realistic within the time I actually have.",
+    "Each morning, I'll spend 30 minutes on one important task before I open my messages. That gives me a window to concentrate without reacting to everyone else's requests. I'm not trying to finish every significant task in one go—just make a deliberate start on work that needs sustained attention instead of letting it drift.",
+    "The plan needs flexibility. Unexpected requests will arrive, circumstances will shift, and if I pack every hour tight the whole thing becomes brittle. I'll leave space in the calendar and stop treating a disrupted afternoon as proof the week has collapsed. The point is to respond to reality, not add another source of frustration.",
+    "On 12 October, I'll review how it's going. Which tasks got enough attention? Which estimates were unrealistic? Was the quiet morning session practical? Those observations will shape the following week's plan. I don't want to keep following an approach just because it looked tidy when I wrote it down.",
+    "What I'm after is a sustainable routine that supports meaningful progress while leaving room for ordinary life. I want clearer judgment about what deserves attention, fewer avoidable distractions, and a more reasonable relationship with unfinished work. If a notebook and a brief weekly review can provide that, I'll take them over another elaborate productivity system.",
+    "The environment around me affects whether I stick to the plan. A phone within reach makes it tempting to check messages even when I've decided to concentrate. Before the morning session, I'll put it somewhere else and keep only the materials required for the task on my desk. It's a small adjustment, but it might make the routine easier to maintain. If it becomes inconvenient or doesn't help, I can change it after the review instead of treating it as a permanent rule. I want the process to stay practical, understandable, and simple enough to use on an ordinary busy day."
+  ],
+  "providers": [
+    {
+      "name": "Claude",
+      "model": "claude-sonnet-4-5-20250929"
+    },
+    {
+      "name": "OpenAI",
+      "model": "gpt-4.1-mini"
+    },
+    {
+      "name": "Grok",
+      "model": "grok-4.3"
+    }
+  ],
+  "revisions": 2,
+  "assessments": 3
+}

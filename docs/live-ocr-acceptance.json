@@ -1,0 +1,22 @@
+{
+  "source_type": "pdf",
+  "word_count": 187,
+  "warnings": [
+    "Text was read from 1 scanned page(s). Review names, numbers and punctuation for OCR errors.",
+    "Exports use a fresh, text-focused layout. Original images, charts, signatures, comments and exact page styling are not carried over."
+  ],
+  "quote": {
+    "total_cents": 419,
+    "detector_cents": 0,
+    "items": [
+      {
+        "label": "Three-engine review \u00b7 first 1,000 words",
+        "cents": 399
+      },
+      {
+        "label": "Scanned pages \u00b7 1",
+        "cents": 20
+      }
+    ]
+  }
+}

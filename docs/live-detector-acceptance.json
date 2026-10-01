@@ -1,0 +1,79 @@
+{
+  "url": "https://txtzi.onrender.com",
+  "elapsed_seconds": 77.7,
+  "tested_at": "2026-10-01T22:03:58Z",
+  "detector": "desklib/ai-text-detector-v1.01",
+  "before_score": 0.999293462398949,
+  "after_score": 0.9988101720809937,
+  "selected": "revision_2",
+  "attempts": [
+    {
+      "version": "original",
+      "score": 0.999293462398949
+    },
+    {
+      "version": "revision_1",
+      "score": 0.999293462398949
+    },
+    {
+      "version": "revision_2",
+      "score": 0.9988101720809937
+    }
+  ],
+  "provider_usage": [
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-5-20250929",
+      "section": 1,
+      "input_tokens": 1723,
+      "output_tokens": 761
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4.1-mini",
+      "section": 1,
+      "input_tokens": 1645,
+      "output_tokens": 599
+    },
+    {
+      "provider": "xai",
+      "model": "grok-4.3",
+      "section": 1,
+      "input_tokens": 1775,
+      "output_tokens": 619
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-5-20250929",
+      "section": 1,
+      "input_tokens": 1824,
+      "output_tokens": 689
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4.1-mini",
+      "section": 1,
+      "input_tokens": 1601,
+      "output_tokens": 540
+    },
+    {
+      "provider": "xai",
+      "model": "grok-4.3",
+      "section": 1,
+      "input_tokens": 1748,
+      "output_tokens": 535
+    }
+  ],
+  "source_words": 493,
+  "revised_words": 411,
+  "changed_blocks": 7,
+  "checks": [
+    "499-credit quote charged exactly once",
+    "Full-document local detector before and after",
+    "Selected lowest eligible measured version",
+    "All three writing providers completed",
+    "All four export formats downloaded",
+    "Successful detector fee retained"
+  ],
+  "limitation": "Synthetic example; no independent detector was tested and this is not an accuracy benchmark."
+}

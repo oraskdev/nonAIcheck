@@ -42,7 +42,7 @@ A custom three-stroke X replaces the earlier logo. Outlined vector wordmarks inc
 - Resend is configured using the approved existing key and sender. Delivery is not verified: direct validation from the deployment workspace was blocked by the provider.
 - Stripe checkout code exists but no Stripe credentials or live/test webhook integration has been validated. Purchases remain disabled when payment configuration is absent.
 - The interface is English. Document language selection covers English, Hebrew, Arabic, Spanish, French, German and Other. This is not a fully translated user interface.
-- Scanned-document OCR packages are configured in Docker but production OCR has not yet been tested on Render.
+- Scanned-document OCR was verified on Render: one scanned PDF page produced 187 words and the correct 20-credit OCR surcharge.
 
 ## Deployment continuation
 
@@ -56,7 +56,7 @@ Never commit .env files, credentials, databases, test accounts or local runtime 
 - Added a before/output Unicode-format inventory and optional removal of BOM, soft hyphen and word joiner. Language joiners and bidirectional controls remain. This does not detect statistical watermarks.
 - The result displays attempted assessments, selected version, and whether a measured reduction occurred. Unavailable assessments return the detector fee as credits.
 - Eight mocked pipeline tests cover selection, fallback, failure and language-safe cleanup. These are not live detector accuracy tests.
-- GPTZero credentials are absent. An unauthenticated trial request from the workspace received Cloudflare 1010 and was not retried. ZeroGPT.com API signup requires account creation and an API balance; no detector purchase has been made.
+- The earlier external-detector dependency is superseded by the self-hosted integration below. GPTZero credentials are unnecessary for the current configuration. No third-party detector purchase was made.
 
 ## Self-hosted detector integration (2 October 2026)
 
@@ -65,4 +65,9 @@ Never commit .env files, credentials, databases, test accounts or local runtime 
 - Compact matrix storage with float32 computation avoids slow bfloat16 emulation on Render CPUs. A full two-section CPU smoke test peaked at about 1.34 GiB and completed in 11.5 seconds, including cold loading. A numerical comparison with float32 on four stored sample versions (three distinct synthetic texts) is recorded below. This is not an accuracy benchmark. See `docs/selfhost-model-smoke.json`.
 - Thirteen automated tests cover selection, failure, whole-document token coverage, no silent external-detector fallback, and exact credit refunds.
 - Detector choice is pinned at quotation and included in the processing notice; legacy quotations remain pinned to GPTZero.
-- Render deployment and the live detector-guided job must be verified before claiming this integration is live.
+- The first live integration test completed with three real assessments, two passes through all three writing APIs, exactly one credit charge and all four exports. It produced only a negligible score reduction; this is not evidence of bypassing an independent checker.
+- An initial smoke test during Render deployment overlap was picked up by the outgoing worker. The detector fee was refunded. Acceptance tests now run after the old instance has retired.
+- Optimized inference was verified on live Render: the 493-word example completed two three-model revisions and three full-document assessments in 77.7 seconds. All four exports downloaded, protected numbers remained, and the 499-credit charge occurred once. See `docs/live-detector-acceptance.json`.
+- Measured score: 99.93 to 99.88 out of 100. This negligible reduction does not meet a claim of reliable detector evasion. No independent detector or statistical watermark removal was validated.
+- The public sample preview now shows the actual stored before/after text, model versions, processing time and detector results.
+- Live browser checks confirmed the sample now has 325 words, the detector is enabled, and switching to Hebrew turns off English-only scoring and updates the quote.
