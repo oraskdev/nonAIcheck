@@ -23,15 +23,15 @@ def prepare(destination):
         with safe_open(source / "model.safetensors", framework="pt", device="cpu") as weights:
             for name in weights.keys():
                 value = weights.get_tensor(name)
-                tensors[name] = value.to(torch.bfloat16) if value.is_floating_point() else value
+                tensors[name] = value.to(torch.bfloat16) if value.is_floating_point() and value.ndim == 2 else value
         save_file(tensors, str(destination / "model.safetensors"), metadata={"format": "pt"})
         for file in source.iterdir():
             if file.suffix in (".json", ".model"):
                 shutil.copyfile(file, destination / file.name)
         config = json.loads((destination / "config.json").read_text())
-        config["torch_dtype"] = "bfloat16"
+        config["torch_dtype"] = "float32"
         (destination / "config.json").write_text(json.dumps(config))
-        (destination / "provenance.json").write_text(json.dumps({"model": MODEL, "revision": REVISION, "license": "MIT", "precision": "bfloat16"}))
+        (destination / "provenance.json").write_text(json.dumps({"model": MODEL, "revision": REVISION, "license": "MIT", "precision": "bfloat16 matrix storage; float32 compute"}))
     print("Pinned txtzi detector prepared", flush=True)
 
 

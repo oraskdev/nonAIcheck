@@ -62,7 +62,7 @@ Never commit .env files, credentials, databases, test accounts or local runtime 
 
 - Added a pinned, MIT-licensed Desklib English detector. Detection runs locally; no third-party detector key or subscription is required. Model weights are prepared during Docker build and inference runs offline.
 - Full-document coverage uses overlapping 512-token sections and a token-weighted mean. Scores are estimates, not percentages of AI-written words. Model revision, coverage and sections are included in the report.
-- Bfloat16 weights reduce memory. A 512-token CPU smoke test peaked at about 1.25 GiB. A numerical comparison with float32 on four stored sample versions (three distinct synthetic texts) differed by at most 0.0126. This is not an accuracy benchmark. See `docs/selfhost-model-smoke.json`.
+- Compact matrix storage with float32 computation avoids slow bfloat16 emulation on Render CPUs. A full two-section CPU smoke test peaked at about 1.34 GiB and completed in 11.5 seconds, including cold loading. A numerical comparison with float32 on four stored sample versions (three distinct synthetic texts) is recorded below. This is not an accuracy benchmark. See `docs/selfhost-model-smoke.json`.
 - Thirteen automated tests cover selection, failure, whole-document token coverage, no silent external-detector fallback, and exact credit refunds.
 - Detector choice is pinned at quotation and included in the processing notice; legacy quotations remain pinned to GPTZero.
 - Render deployment and the live detector-guided job must be verified before claiming this integration is live.

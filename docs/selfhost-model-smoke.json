@@ -5,33 +5,35 @@
     {
       "sample": "render-live-original",
       "sha256": "c68a445d0d04dbb91dbcf2371936e686b318bf23e98996acac549b83b3bcb002",
-      "bfloat16_score": 0.9999822378158569,
+      "mixed_precision_score": 0.9999822378158569,
       "float32_score": 0.9999823570251465,
       "absolute_difference": 1.1920928955078125e-07
     },
     {
       "sample": "render-live-revised",
       "sha256": "c68a445d0d04dbb91dbcf2371936e686b318bf23e98996acac549b83b3bcb002",
-      "bfloat16_score": 0.9999822378158569,
+      "mixed_precision_score": 0.9999822378158569,
       "float32_score": 0.9999823570251465,
       "absolute_difference": 1.1920928955078125e-07
     },
     {
       "sample": "render-revision-original",
       "sha256": "8118553b735727de0a36a547669707ae9bf712f49d57ef5c9b35f24bfe89fe0e",
-      "bfloat16_score": 0.6057990193367004,
+      "mixed_precision_score": 0.6182319521903992,
       "float32_score": 0.6183825731277466,
-      "absolute_difference": 0.012583553791046143
+      "absolute_difference": 0.0001506209373474121
     },
     {
       "sample": "render-revision-revised",
       "sha256": "37da64eb023e637b2013420a6c1ace70c2d30c2d1457aea9abbe68a0877be404",
-      "bfloat16_score": 0.9859364032745361,
+      "mixed_precision_score": 0.986406147480011,
       "float32_score": 0.9864004850387573,
-      "absolute_difference": 0.0004640817642211914
+      "absolute_difference": 5.662441253662109e-06
     }
   ],
   "note": "Numerical smoke test on synthetic editing samples. Not an accuracy benchmark or proof of performance on human-authored content.",
   "cpu_threads": 1,
-  "measured_bfloat16_peak_mib_at_512_tokens": 1247.4
+  "measured_mixed_peak_mib": 1367.5,
+  "cold_two_window_seconds": 11.5,
+  "precision": "bfloat16 matrix storage; float32 compute"
 }

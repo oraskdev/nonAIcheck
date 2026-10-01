@@ -33,6 +33,7 @@ def windows(ids, width=MAX_TOKENS - 2, overlap=OVERLAP):
 def _load(directory):
     import torch
     from transformers import AutoConfig, AutoModel, AutoTokenizer, PreTrainedModel
+    from safetensors.torch import load_file
 
     class DesklibModel(PreTrainedModel):
         config_class = AutoConfig
@@ -52,7 +53,21 @@ def _load(directory):
 
     torch.set_num_threads(1)
     tokenizer = AutoTokenizer.from_pretrained(directory, local_files_only=True, trust_remote_code=False)
-    model = DesklibModel.from_pretrained(directory, local_files_only=True, use_safetensors=True, dtype=torch.bfloat16).eval()
+    # Preserve checkpoint dtypes without allocating a second complete model.
+    # Float32 layers avoid slow BF16 software emulation on older host CPUs.
+    config = AutoConfig.from_pretrained(directory, local_files_only=True, trust_remote_code=False)
+    with torch.device("meta"):
+        model = DesklibModel(config)
+    model.load_state_dict(load_file(str(Path(directory) / "model.safetensors")), assign=True, strict=True)
+    class FloatLinear(torch.nn.Linear):
+        def forward(self, value):
+            return torch.nn.functional.linear(value.float(), self.weight.float(), self.bias.float() if self.bias is not None else None)
+    for module in model.modules():
+        if isinstance(module, torch.nn.Linear):
+            module.__class__ = FloatLinear
+        elif isinstance(module, torch.nn.Embedding):
+            module.register_forward_hook(lambda module, args, output: output.float())
+    model.eval()
     return torch, tokenizer, model
 
 
@@ -82,7 +97,7 @@ def assess(text, directory, on_progress=None):
         return {
             "status": "assessed", "provider": "txtzi detector", "provider_id": "local",
             "ai_score": value, "score_label": "AI-likelihood score", "score_kind": "window_weighted_model_estimate",
-            "model": MODEL_ID, "version": MODEL_REVISION, "precision": "bfloat16",
+            "model": MODEL_ID, "version": MODEL_REVISION, "precision": "bfloat16 matrix storage; float32 compute",
             "sections": results, "tokens_assessed": len(ids), "coverage": "full_document",
             "confidence": "Not calibrated", "language": "English",
             "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta.",

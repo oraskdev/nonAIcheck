@@ -1,4 +1,4 @@
-"""Three independent editing passes; detector estimates come from the detector API."""
+"""Three independent editing passes; detector estimates come from the selected assessment provider."""
 import json
 import re
 import time
@@ -129,13 +129,15 @@ def refine(blocks, options, on_progress, initial=None):
         working = [lookup.get(b["id"], b) for b in original]
         for step, (provider, label, instruction) in enumerate([
             ("anthropic", "Claude is refining your writing", "Improve the wording, flow and clarity. Match the selected tone and editing depth."),
-            ("openai", "OpenAI is checking meaning and details", "Compare the current draft against the ORIGINAL. Correct meaning drift, omissions and altered facts or citations. Retain worthwhile wording improvements. This is source comparison, not external fact verification."),
+            ("openai", "OpenAI is checking meaning and details", "Compare the current draft against the ORIGINAL. Correct meaning drift, omissions and altered facts or citations. Make only necessary factual corrections; do not standardize sentence rhythm, add formal transitions or replace distinctive phrasing with generic prose. Retain worthwhile wording improvements. This is source comparison, not external fact verification."),
             ("xai", "Grok is reviewing the final draft", "Review the current draft against the ORIGINAL. Improve remaining awkward phrasing and repetition only when it preserves the original meaning. Keep protected details and quotations unchanged.")
         ]):
             position = index * 3 + step
             on_progress(10 + int(position / max(1, len(batches) * 3) * 78), f"{label} · section {index + 1}/{len(batches)}")
-            if options.get("alternate_revision"):
-                instruction += " Produce an alternative natural revision: vary repetitive sentence structure and replace generic filler with direct wording. Preserve every substantive point. Do not add deliberate errors or invisible characters."
+            if options.get("alternate_revision") and provider == "anthropic":
+                instruction += " Rebuild the prose within each block instead of swapping synonyms. Use the source's concrete details to carry the argument. Remove generic framing, summary slogans, repeated paragraph openings and unnecessary conclusions. Mix short direct sentences with longer explanations where meaning needs them. Respect the chosen tone; do not force slang or rhetorical questions. Preserve every substantive point and the author's uncertainty. Do not invent anecdotes, add deliberate errors or invisible characters."
+            elif options.get("alternate_revision"):
+                instruction += " This is a second revision. Preserve its sentence variety and direct wording. Make minimal corrections needed for fidelity or clarity, without rewriting it back into a formal template."
             prompt = json.dumps({"tone": tone, "editing_depth": depth, "instruction": instruction, "original_blocks": original, "current_draft": working}, ensure_ascii=False)
             output, token_usage = invoke(provider, BASE, prompt)
             working = parse_blocks(output, original)

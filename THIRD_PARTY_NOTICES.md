@@ -8,7 +8,7 @@ https://huggingface.co/desklib/ai-text-detector-v1.01
 Architecture reference: https://github.com/desklib/ai-text-detector
 Base architecture: Microsoft's DeBERTa-v3-large.
 All credit for original training and weights belongs to the original authors.
-txtzi converts the weights to bfloat16, pools in float32, processes overlapping
+txtzi converts the weights to bfloat16 matrix storage with float32 computation, pools in float32, processes overlapping
 512-token windows, and reports a token-weighted mean across the full document.
 Those deployment choices and the txtzi rewrite workflow are not an endorsement
 by Desklib and have not been independently benchmarked for detector accuracy.

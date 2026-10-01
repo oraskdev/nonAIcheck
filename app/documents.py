@@ -191,7 +191,7 @@ def is_rtl(text):
 
 
 def export_body(title, blocks):
-    if blocks and blocks[0]["type"] == "heading" and blocks[0]["text"].strip().casefold() == title.strip().casefold():
+    if blocks and blocks[0]["type"] in ("heading", "paragraph") and blocks[0]["text"].strip().casefold() == title.strip().casefold():
         return blocks[1:]
     return blocks
 
