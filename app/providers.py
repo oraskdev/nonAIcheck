@@ -146,7 +146,16 @@ def refine(blocks, options, on_progress, initial=None):
     return completed, {"provider_usage": usage, "flags": list({f["block_id"]: f for f in flags}.values())}
 
 
-def detect(text):
+def detect(text, provider=None, on_progress=None):
+    provider = provider or settings.detector_provider
+    if provider == "local":
+        try:
+            from .local_detector import assess
+            return assess(text, settings.detector_model_dir, on_progress)
+        except Exception:
+            return {"status": "not_assessed", "reason": "The local detector could not complete this assessment. The detector fee will be returned."}
+    if provider != "gptzero":
+        return {"status": "not_assessed", "reason": "Unknown detector provider."}
     if not settings.detector_key:
         return {"status": "not_assessed", "reason": "The detector is not connected."}
     try:
@@ -155,6 +164,6 @@ def detect(text):
         probabilities = document.get("class_probabilities", {})
         if not all(isinstance(probabilities.get(k), (int, float)) and 0 <= probabilities[k] <= 1 for k in ("human", "mixed", "ai")):
             raise ValueError("Detector returned no calibrated class probabilities")
-        return {"status": "assessed", "provider": "GPTZero", "classification": document.get("document_classification", "UNCLASSIFIED"), "probabilities": probabilities, "confidence": document.get("confidence_category", "unknown"), "version": document.get("version"), "notice": "An estimate from this detector, not proof of authorship or a guarantee about other detectors."}
+        return {"status": "assessed", "provider": "GPTZero", "provider_id": "gptzero", "ai_score": probabilities["ai"], "score_label": "AI-only class probability", "classification": document.get("document_classification", "UNCLASSIFIED"), "probabilities": probabilities, "confidence": document.get("confidence_category", "unknown"), "version": document.get("version"), "notice": "An estimate from this detector, not proof of authorship or a guarantee about other detectors."}
     except Exception:
         return {"status": "not_assessed", "reason": "The detector did not return a valid assessment. The detector fee will be returned."}

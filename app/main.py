@@ -94,7 +94,7 @@ def health():
 
 @app.get("/api/config")
 def config():
-    return {"name": "txtzi", "ai_ready": settings.ai_ready, "payments_ready": settings.payments_ready, "detector_ready": bool(settings.detector_key), "recovery_ready": bool(settings.resend_key and settings.email_from), "ocr_ready": bool(shutil.which("pdftoppm") and shutil.which("tesseract")), "max_words": settings.max_words, "max_file_mb": 20, "retention_hours": settings.retention_hours, "base_price": settings.base_price, "extra_price": settings.extra_price, "detector_price": settings.detector_price, "ocr_price": settings.ocr_price, "slide_price": settings.slide_price, "credit_packs": billing.PACKS, "weekly_free_credits": settings.weekly_free_credits, "support_email": settings.support_email}
+    return {"name": "txtzi", "ai_ready": settings.ai_ready, "payments_ready": settings.payments_ready, "detector_ready": settings.detector_ready, "detector_provider": settings.detector_provider, "detector_name": settings.detector_name, "recovery_ready": bool(settings.resend_key and settings.email_from), "ocr_ready": bool(shutil.which("pdftoppm") and shutil.which("tesseract")), "max_words": settings.max_words, "max_file_mb": 20, "retention_hours": settings.retention_hours, "base_price": settings.base_price, "extra_price": settings.extra_price, "detector_price": settings.detector_price, "ocr_price": settings.ocr_price, "slide_price": settings.slide_price, "credit_packs": billing.PACKS, "weekly_free_credits": settings.weekly_free_credits, "support_email": settings.support_email}
 
 
 class Credentials(BaseModel):
@@ -231,6 +231,7 @@ class EditOptions(BaseModel):
     clean_metadata: bool = True
     clean_hidden: bool = True
     detector: bool = False
+    detector_provider: str | None = Field(default=None, pattern="^(local|gptzero)$")
     consent: bool = False
     provider_consent: bool = False
 
@@ -274,13 +275,15 @@ def quote_document(request: Request, text: str = Form(""), title: str = Form("Un
     if extracted["word_count"] > settings.max_words or total_chars > settings.max_chars:
         raise HTTPException(400, f"Please limit each document to {settings.max_words:,} words and {settings.max_chars:,} characters.")
     if prefs.detector:
-        if not settings.detector_key:
-            raise HTTPException(400, "AI-detector assessment is not connected yet.")
+        if not settings.detector_ready:
+            raise HTTPException(400, "AI-detector assessment is not available yet.")
+        if prefs.detector_provider != settings.detector_provider:
+            raise HTTPException(409, "The detector selection changed. Reload the studio and review the processing notice.")
         if prefs.language != "English" or extracted["word_count"] < 300 or extracted["source_type"] == "pptx":
             raise HTTPException(400, "Detector assessment is available for English prose of at least 300 words, excluding presentations.")
     price = quote(extracted["word_count"], extracted["ocr_pages"], extracted["slides"], prefs.detector)
     with SessionLocal() as db:
-        doc = Document(user_id=user.id, title=title.strip() or "Untitled document", source_type=extracted["source_type"], source=encrypt(extracted["blocks"]), options=json.dumps({**prefs.model_dump(), "consent_version": "2026-10-01", "consented_at": now()}), warnings=json.dumps(extracted["warnings"]), word_count=extracted["word_count"], price_cents=price["total_cents"], detector_cents=price["detector_cents"], quote_breakdown=json.dumps(price), quote_expires_at=now() + 3600, expires_at=now() + settings.retention_hours * 3600)
+        doc = Document(user_id=user.id, title=title.strip() or "Untitled document", source_type=extracted["source_type"], source=encrypt(extracted["blocks"]), options=json.dumps({**prefs.model_dump(), "consent_version": "2026-10-02", "consented_at": now()}), warnings=json.dumps(extracted["warnings"]), word_count=extracted["word_count"], price_cents=price["total_cents"], detector_cents=price["detector_cents"], quote_breakdown=json.dumps(price), quote_expires_at=now() + 3600, expires_at=now() + settings.retention_hours * 3600)
         db.add(doc)
         db.commit()
         return document_json(doc, True)
@@ -420,7 +423,7 @@ def admin_overview(user=Depends(admin_user)):
         users = db.scalars(select(User).order_by(User.created_at.desc()).limit(100)).all()
         docs = db.scalars(select(Document).order_by(Document.created_at.desc()).limit(50)).all()
         audits = db.scalars(select(Audit).order_by(Audit.created_at.desc()).limit(50)).all()
-        return {"users": [public_user(u) for u in users], "documents": [document_json(d) for d in docs], "counts": counts, "revenue_cents": db.scalar(select(func.coalesce(func.sum(Payment.amount), 0)).where(Payment.status == "paid")), "providers": [{"name": "OpenAI", "connected": bool(settings.openai_key), "model": settings.openai_model}, {"name": "Anthropic", "connected": bool(settings.anthropic_key), "model": settings.anthropic_model}, {"name": "xAI", "connected": bool(settings.xai_key), "model": settings.xai_model}, {"name": "GPTZero", "connected": bool(settings.detector_key), "model": "Optional assessment"}, {"name": "Stripe", "connected": settings.payments_ready, "model": "Checkout + signed webhook"}], "audit": [{"action": a.action, "detail": a.detail, "created_at": a.created_at} for a in audits]}
+        return {"users": [public_user(u) for u in users], "documents": [document_json(d) for d in docs], "counts": counts, "revenue_cents": db.scalar(select(func.coalesce(func.sum(Payment.amount), 0)).where(Payment.status == "paid")), "providers": [{"name": "OpenAI", "connected": bool(settings.openai_key), "model": settings.openai_model}, {"name": "Anthropic", "connected": bool(settings.anthropic_key), "model": settings.anthropic_model}, {"name": "xAI", "connected": bool(settings.xai_key), "model": settings.xai_model}, {"name": settings.detector_name, "connected": settings.detector_ready, "model": "Desklib English beta · self-hosted" if settings.detector_provider == "local" else "Optional assessment"}, {"name": "Stripe", "connected": settings.payments_ready, "model": "Checkout + signed webhook"}], "audit": [{"action": a.action, "detail": a.detail, "created_at": a.created_at} for a in audits]}
 
 
 class CreditGrant(BaseModel):

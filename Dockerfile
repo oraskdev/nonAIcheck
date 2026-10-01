@@ -19,7 +19,16 @@ RUN apt-get update \
 
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt \
+    && pip install torch==2.14.1+cpu --index-url https://download.pytorch.org/whl/cpu
+
+COPY scripts/prepare_detector.py ./scripts/prepare_detector.py
+RUN python scripts/prepare_detector.py /opt/txtzi/detector
+COPY THIRD_PARTY_NOTICES.md /opt/txtzi/detector/THIRD_PARTY_NOTICES.md
+ENV DETECTOR_PROVIDER=local \
+    DETECTOR_MODEL_DIR=/opt/txtzi/detector \
+    HF_HUB_OFFLINE=1 \
+    TOKENIZERS_PARALLELISM=false
 
 COPY app ./app
 COPY static ./static

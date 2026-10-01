@@ -32,3 +32,11 @@ The Render service only reports `recovery_ready` as true when both the Resend ke
 ## Brand and validation
 
 The homepage explains the distinct Claude, OpenAI and Grok passes. Model versions are reported from completed jobs. See `RELEASE_STATUS.md` for verified behavior and the exact remaining production blockers.
+
+## Self-hosted detector
+
+The Docker image builds a pinned Desklib English detector into `/opt/txtzi/detector`. `DETECTOR_PROVIDER=local` uses it without an API key. Allow 2 GB RAM and one CPU for the web service; the Blueprint uses Standard. Keep one application process and one job worker so model memory is not duplicated. The model runs offline at runtime.
+
+For local development, install CPU PyTorch 2.14.1 and the requirements, then run `python scripts/prepare_detector.py /your/model/path` and set `DETECTOR_MODEL_DIR` accordingly. Numerical and integration smoke tests are documented in `RELEASE_STATUS.md`; this detector is an English beta, not an authorship certificate. Model licensing is in `THIRD_PARTY_NOTICES.md`.
+
+The optional legacy adapter remains available with `DETECTOR_PROVIDER=gptzero` and `GPTZERO_API_KEY`. No job silently switches providers.

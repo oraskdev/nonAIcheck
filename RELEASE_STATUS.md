@@ -46,7 +46,7 @@ A custom three-stroke X replaces the earlier logo. Outlined vector wordmarks inc
 
 ## Deployment continuation
 
-Render service `srv-davaltfpn0mc73ca26ng` uses Docker Starter in Frankfurt, with dedicated PostgreSQL `dpg-davaleflk1mc739asf3g-a` on Basic 256 MB and 1 GB storage. Estimated base hosting is $13.30/month before usage; billing recurs and is not a lifetime $50 cap. The domain has not incurred a charge. Three AI keys and Resend are configured as server-only secrets. Verify email delivery and password recovery. Configure Stripe and a signed webhook before enabling paid checkout. Add the selected domain only after its registration and the service hostname are known.
+Render service `srv-davaltfpn0mc73ca26ng` uses Docker Standard (2 GB) in Frankfurt, with dedicated PostgreSQL `dpg-davaleflk1mc739asf3g-a` on Basic 256 MB and 1 GB storage. Estimated base hosting is $31.30/month before usage; billing recurs and is not a lifetime $50 cap. The domain has not incurred a charge. Three AI keys and Resend are configured as server-only secrets. Verify email delivery and password recovery. Configure Stripe and a signed webhook before enabling paid checkout. Add the selected domain only after its registration and the service hostname are known.
 
 Never commit .env files, credentials, databases, test accounts or local runtime folders.
 
@@ -57,3 +57,12 @@ Never commit .env files, credentials, databases, test accounts or local runtime 
 - The result displays attempted assessments, selected version, and whether a measured reduction occurred. Unavailable assessments return the detector fee as credits.
 - Eight mocked pipeline tests cover selection, fallback, failure and language-safe cleanup. These are not live detector accuracy tests.
 - GPTZero credentials are absent. An unauthenticated trial request from the workspace received Cloudflare 1010 and was not retried. ZeroGPT.com API signup requires account creation and an API balance; no detector purchase has been made.
+
+## Self-hosted detector integration (2 October 2026)
+
+- Added a pinned, MIT-licensed Desklib English detector. Detection runs locally; no third-party detector key or subscription is required. Model weights are prepared during Docker build and inference runs offline.
+- Full-document coverage uses overlapping 512-token sections and a token-weighted mean. Scores are estimates, not percentages of AI-written words. Model revision, coverage and sections are included in the report.
+- Bfloat16 weights reduce memory. A 512-token CPU smoke test peaked at about 1.25 GiB. A numerical comparison with float32 on four stored sample versions (three distinct synthetic texts) differed by at most 0.0126. This is not an accuracy benchmark. See `docs/selfhost-model-smoke.json`.
+- Thirteen automated tests cover selection, failure, whole-document token coverage, no silent external-detector fallback, and exact credit refunds.
+- Detector choice is pinned at quotation and included in the processing notice; legacy quotations remain pinned to GPTZero.
+- Render deployment and the live detector-guided job must be verified before claiming this integration is live.

@@ -42,6 +42,10 @@ class Settings:
         self.anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5-20250929")
         self.xai_model = os.getenv("XAI_MODEL", "grok-4.3")
         self.detector_key = os.getenv("GPTZERO_API_KEY", "")
+        self.detector_provider = os.getenv("DETECTOR_PROVIDER", "local")
+        self.detector_model_dir = os.getenv("DETECTOR_MODEL_DIR", "/opt/txtzi/detector")
+        if self.detector_provider not in ("local", "gptzero"):
+            raise RuntimeError("DETECTOR_PROVIDER must be local or gptzero")
         self.stripe_key = os.getenv("STRIPE_SECRET_KEY", "")
         self.stripe_webhook = os.getenv("STRIPE_WEBHOOK_SECRET", "")
         self.bootstrap_token = os.getenv("ADMIN_BOOTSTRAP_TOKEN", "")
@@ -60,6 +64,17 @@ class Settings:
         self.slide_price = max(0, int(os.getenv("PRICE_SLIDE_CENTS", "10")))
         # Promotional balance granted once per account each ISO week; set to 0 to disable.
         self.weekly_free_credits = max(0, int(os.getenv("WEEKLY_FREE_CREDITS", "500")))
+
+    @property
+    def detector_ready(self):
+        if self.detector_provider == "gptzero":
+            return bool(self.detector_key)
+        from .local_detector import available
+        return available(self.detector_model_dir)
+
+    @property
+    def detector_name(self):
+        return "txtzi detector" if self.detector_provider == "local" else "GPTZero"
 
     @property
     def ai_ready(self):

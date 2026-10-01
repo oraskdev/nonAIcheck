@@ -1,0 +1,37 @@
+{
+  "model": "desklib/ai-text-detector-v1.01",
+  "revision": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+  "samples": [
+    {
+      "sample": "render-live-original",
+      "sha256": "c68a445d0d04dbb91dbcf2371936e686b318bf23e98996acac549b83b3bcb002",
+      "bfloat16_score": 0.9999822378158569,
+      "float32_score": 0.9999823570251465,
+      "absolute_difference": 1.1920928955078125e-07
+    },
+    {
+      "sample": "render-live-revised",
+      "sha256": "c68a445d0d04dbb91dbcf2371936e686b318bf23e98996acac549b83b3bcb002",
+      "bfloat16_score": 0.9999822378158569,
+      "float32_score": 0.9999823570251465,
+      "absolute_difference": 1.1920928955078125e-07
+    },
+    {
+      "sample": "render-revision-original",
+      "sha256": "8118553b735727de0a36a547669707ae9bf712f49d57ef5c9b35f24bfe89fe0e",
+      "bfloat16_score": 0.6057990193367004,
+      "float32_score": 0.6183825731277466,
+      "absolute_difference": 0.012583553791046143
+    },
+    {
+      "sample": "render-revision-revised",
+      "sha256": "37da64eb023e637b2013420a6c1ace70c2d30c2d1457aea9abbe68a0877be404",
+      "bfloat16_score": 0.9859364032745361,
+      "float32_score": 0.9864004850387573,
+      "absolute_difference": 0.0004640817642211914
+    }
+  ],
+  "note": "Numerical smoke test on synthetic editing samples. Not an accuracy benchmark or proof of performance on human-authored content.",
+  "cpu_threads": 1,
+  "measured_bfloat16_peak_mib_at_512_tokens": 1247.4
+}
