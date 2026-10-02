@@ -1,0 +1,289 @@
+{
+  "method": "meaning-first-v1",
+  "tested_at": "2026-10-02",
+  "environment": "local, real Anthropic/OpenAI/xAI calls and pinned production detector weights",
+  "detector": "desklib/ai-text-detector-v1.01",
+  "detector_revision": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+  "notice": "Three synthetic development samples used while designing prompts; not an independent accuracy benchmark. All selected scores remain high. This does not demonstrate reliable detector avoidance. No detector weights, thresholds or scoring formulas changed.",
+  "automated_tests": 19,
+  "samples": [
+    {
+      "name": "garden",
+      "synthetic": true,
+      "original": [
+        "My balcony garden plan",
+        "I am planning to grow herbs on my balcony this spring because I would like to have fresh ingredients available when I cook. The balcony receives direct sunlight in the morning, but the neighboring building shades it during the afternoon. I have not measured the exact amount of sunlight yet, so I need to do that before choosing all the plants. My initial preference is for basil, mint, and parsley, although I may change this list after learning more about their needs.",
+        "The space is limited, and I do not want the pots to make it difficult to open the balcony door. I intend to start with 3 containers rather than filling the entire area immediately. This should allow me to learn how much maintenance is required before making a larger commitment. I also need to check that the containers have drainage holes and that any water underneath them will not cause problems for my downstairs neighbor.",
+        "My budget for the first stage is $60. That amount needs to cover the containers, potting mix, and the plants themselves. I already own a small watering can, so I do not expect to purchase another one. If the total cost is higher than expected, I will reduce the number of plants rather than increase the budget. I want this to remain a manageable experiment instead of becoming an expensive project.",
+        "Watering is the part I am most uncertain about. I sometimes travel for work, and I cannot assume that a neighbor will always be available to help. Before buying anything, I will consider what would happen if I were away for 4 days. A simple self-watering container might help, but I have not compared prices or checked whether it would be suitable for the plants I want.",
+        "I hope to begin on 18 April, provided that the weather is suitable and I have finished the necessary checks. After the first month, I will review which plants are doing well and whether I am enjoying the routine. If the experiment is successful, I may add another herb later. For now, my goal is simply to learn and grow a small amount of food without taking on more than I can comfortably maintain."
+      ],
+      "revised": [
+        "My balcony garden plan",
+        "This spring I want to grow herbs on my balcony so I'll have fresh ingredients when I cook. The balcony gets direct sunlight in the morning, but a neighboring building casts shade over it in the afternoon. I haven't measured the exact amount of sunlight yet, and I need to do that before I choose all my plants. Right now I'm thinking basil, mint, and parsley, though the list might change once I learn more about what each one needs.",
+        "Space is limited, and I don't want pots blocking the balcony door. I plan to start with 3 containers rather than filling the entire area right away. Starting small will let me learn what the maintenance actually requires before I commit to something larger. I need to check that the containers have drainage holes and make sure water underneath them won't cause problems for my downstairs neighbor.",
+        "My budget for this first stage is $60, which has to cover containers, potting mix, and the plants themselves. I already own a small watering can, so I don't expect to buy a new one. If the total cost goes over budget, I'll reduce the number of plants rather than increase what I'm willing to spend. The goal is a manageable experiment, not an expensive project.",
+        "Watering is the part I'm most uncertain about. I sometimes travel for work, and I can't assume a neighbor will always be available to help. I'll need to think through what happens if I'm away for 4 days before I buy anything. A simple self-watering container is one option, though I haven't compared prices yet or checked whether they're suitable for the plants I'm considering.",
+        "I'm hoping to begin on 18 April, depending on the weather and after I've done the necessary checks. After the first month, I'll review how the plants are doing and whether I'm actually enjoying this. If the experiment works out, I may add another herb later. For now, the goal is to learn and grow a small amount of food without taking on more maintenance than I'm comfortable with."
+      ],
+      "before_score": 0.9999592304229736,
+      "after_score": 0.9988101720809937,
+      "attempts": [
+        {
+          "version": "original",
+          "score": 0.9999592304229736
+        },
+        {
+          "version": "revision_1",
+          "score": 0.9994482398033142
+        },
+        {
+          "version": "revision_2",
+          "score": 0.9988101720809937
+        }
+      ],
+      "provider_usage": [
+        {
+          "provider": "anthropic",
+          "model": "claude-sonnet-4-5-20250929",
+          "section": 1,
+          "input_tokens": 678,
+          "output_tokens": 685
+        },
+        {
+          "provider": "openai",
+          "model": "gpt-4.1-mini",
+          "section": 1,
+          "input_tokens": 721,
+          "output_tokens": 472
+        },
+        {
+          "provider": "xai",
+          "model": "grok-4.3",
+          "section": 1,
+          "input_tokens": 1394,
+          "output_tokens": 5
+        },
+        {
+          "provider": "openai",
+          "model": "gpt-4.1-mini",
+          "section": 1,
+          "input_tokens": 641,
+          "output_tokens": 376
+        },
+        {
+          "provider": "anthropic",
+          "model": "claude-sonnet-4-5-20250929",
+          "section": 1,
+          "input_tokens": 716,
+          "output_tokens": 592
+        },
+        {
+          "provider": "xai",
+          "model": "grok-4.3",
+          "section": 1,
+          "input_tokens": 1379,
+          "output_tokens": 5
+        }
+      ],
+      "selected_version": "revision_2",
+      "flags": []
+    },
+    {
+      "name": "team_update",
+      "synthetic": true,
+      "original": [
+        "A proposal for our project updates",
+        "Our team currently shares project updates through several different channels, which can make it difficult to understand the latest status of a task. Some information appears in chat messages, while other details are recorded in meeting notes or individual documents. I am proposing a small change to the way we collect these updates so that people can find the information they need without searching through multiple places.",
+        "The proposal is to use a shared document with a short entry for each active project. Each entry would include the current status, the next planned step, and any issue that requires help from another person. This would not replace conversations or detailed project documentation. Its purpose would be to provide a starting point and make it easier to see where further discussion is needed. We would still use our existing channels for urgent questions.",
+        "I suggest trying this process for 2 weeks, beginning on 6 May. During the trial, project owners would update their entries before the regular Friday meeting. The meeting could then focus on decisions and unresolved issues instead of spending most of the time collecting basic status information. However, we should not assume that this change will save time until we have actually tested it. Some projects may need a different approach.",
+        "To keep the trial manageable, I would like to limit each update to 150 words. This is intended as a guide rather than a reason to leave out essential context. If a project needs a longer explanation, the entry can include a link to a separate document. We should also avoid including confidential customer information in the shared overview. Existing access restrictions would continue to apply to any linked material.",
+        "At the end of the trial, I propose asking the team whether the overview was easy to maintain and whether it helped them prepare for meetings. We should also identify any information that was missing or repeated unnecessarily. If the process creates more work than it removes, we can revise it or stop using it. The aim is to make our coordination clearer, not to introduce a reporting requirement that has no practical benefit. I would welcome feedback on the format before the trial begins, particularly from people managing several projects at once."
+      ],
+      "revised": [
+        "A proposal for our project updates",
+        "Right now the team shares project updates across several different channels. Some information appears in chat messages, while other details end up in meeting notes or individual documents. This approach makes it hard to understand the latest status of a task without searching through multiple places. I'm proposing a change to how we collect updates so the information is easier to find.",
+        "The idea is to use a shared document with a short entry for each active project. Each entry would include the current status, the next planned step, and any issue that needs help from another person. This wouldn't replace conversations or detailed project documentation\u2014its purpose is to provide a starting point and make it easier to see where further discussion is needed. Existing channels would still be used for urgent questions.",
+        "I suggest trying this process for 2 weeks starting 6 May. During the trial, project owners would update their entries before the regular Friday meeting. The meeting could then focus on decisions and unresolved issues instead of collecting basic status information. I'm not assuming this will save time until we've tested it, and some projects may need a different approach.",
+        "Each update would be limited to 150 words during the trial. The word limit is a guide, not a reason to omit essential context\u2014if a longer explanation is needed, the entry can include a link to a separate document. Avoid including confidential customer information in the shared overview. Existing access restrictions will continue to apply to any linked material.",
+        "At the end of the trial, we'd ask the team if the overview was easy to maintain and helped with meeting preparation. We'd also identify any missing or unnecessarily repeated information. If the process creates more work than it removes, we'll revise or stop using it. The aim is to make coordination clearer, not to introduce a reporting requirement without practical benefit. Feedback on the format is welcomed before the trial begins, especially from people managing multiple projects."
+      ],
+      "before_score": 0.9999475479125977,
+      "after_score": 0.9992883801460266,
+      "attempts": [
+        {
+          "version": "original",
+          "score": 0.9999475479125977
+        },
+        {
+          "version": "revision_1",
+          "score": 0.9998717308044434
+        },
+        {
+          "version": "revision_2",
+          "score": 0.9992883801460266
+        }
+      ],
+      "provider_usage": [
+        {
+          "provider": "anthropic",
+          "model": "claude-sonnet-4-5-20250929",
+          "section": 1,
+          "input_tokens": 667,
+          "output_tokens": 676
+        },
+        {
+          "provider": "openai",
+          "model": "gpt-4.1-mini",
+          "section": 1,
+          "input_tokens": 742,
+          "output_tokens": 449
+        },
+        {
+          "provider": "xai",
+          "model": "grok-4.3",
+          "section": 1,
+          "input_tokens": 1372,
+          "output_tokens": 5
+        },
+        {
+          "provider": "openai",
+          "model": "gpt-4.1-mini",
+          "section": 1,
+          "input_tokens": 643,
+          "output_tokens": 380
+        },
+        {
+          "provider": "anthropic",
+          "model": "claude-sonnet-4-5-20250929",
+          "section": 1,
+          "input_tokens": 701,
+          "output_tokens": 550
+        },
+        {
+          "provider": "xai",
+          "model": "grok-4.3",
+          "section": 1,
+          "input_tokens": 1358,
+          "output_tokens": 5
+        }
+      ],
+      "selected_version": "revision_2",
+      "flags": []
+    },
+    {
+      "name": "weekly_plan",
+      "synthetic": true,
+      "original": [
+        "A simpler way to plan my week",
+        "I want to establish a more effective approach to personal planning because my current routine leaves me feeling busy without a clear sense of progress. Throughout the week, I frequently move between messages, small errands, and unfinished tasks. Although each activity appears necessary at the time, the accumulated effect is that important work receives less attention than I intended.",
+        "My proposed solution is to introduce a short planning session at the beginning of each week. During this session, I will identify the responsibilities that genuinely require my attention and distinguish them from activities that can wait. Rather than creating an extensive list of ambitions, I want to select a small number of priorities that are realistic within the time available.",
+        "To support this approach, I plan to spend 30 minutes on one important task before opening my messages each morning. This period will provide an opportunity to concentrate without immediately reacting to other people's requests. I am not expecting to complete every significant task in a single sitting. The purpose is to make a deliberate start and reduce the tendency to postpone work that requires sustained attention.",
+        "Another important element of the plan is flexibility. Unexpected requests and changes in circumstances are inevitable, so filling every available hour would make the system unnecessarily fragile. I want to leave some space in the calendar and avoid interpreting a disrupted afternoon as evidence that the entire week has failed. A useful plan should help me respond to reality rather than create additional frustration.",
+        "On 12 October, I will review how the routine has worked. I intend to consider which tasks received enough attention, which estimates were unrealistic, and whether the quiet morning session was practical. These observations will guide the following week's plan. I do not want to keep repeating an approach simply because it looked organized when I first wrote it down.",
+        "Ultimately, my objective is to develop a sustainable routine that supports meaningful progress while leaving room for ordinary life. I am looking for greater clarity about what deserves attention, fewer avoidable distractions, and a more reasonable relationship with unfinished work. If a simple notebook and a brief weekly review can provide that structure, I would prefer them to another complicated productivity system.",
+        "I also recognize that the environment around me influences whether I follow the plan. A phone within easy reach makes it tempting to check messages, even when I have already decided to concentrate. Before the morning session, I will therefore put it somewhere else and keep only the materials required for the task on my desk. This is a small adjustment, but it may make the intended routine easier to maintain. If the arrangement becomes inconvenient or fails to help, I can change it after the review rather than treating it as a permanent rule. I want the process to remain practical, understandable, and simple enough to use on an ordinary busy day."
+      ],
+      "revised": [
+        "A simpler way to plan my week",
+        "I want to find a more effective approach to personal planning. My current routine often leaves me feeling busy without a clear sense of progress. Throughout the week, I frequently move between messages, small errands, and unfinished tasks. Each activity seems necessary at the moment, but taken together, they leave important work receiving less attention than I intend.",
+        "My proposed solution is to introduce a short planning session at the start of each week. During this session, I will identify responsibilities that genuinely require my attention. I want to distinguish these from activities that can wait. Rather than making an extensive list of ambitions, I will select a small number of priorities that are realistic within the time I have available.",
+        "Each morning, I plan to spend 30 minutes focused on one important task before opening messages. This time will give me a chance to concentrate without immediately reacting to other people\u2019s requests. I don\u2019t expect to complete every significant task in that single sitting. The purpose is to make a deliberate start and reduce the tendency to postpone work that needs sustained attention.",
+        "Flexibility is another important element of the plan. Unexpected requests and changes in circumstances will happen. Filling every available hour would make the system unnecessarily fragile. I want to leave some space in my calendar and avoid interpreting a disrupted afternoon as evidence that the entire week has failed. A useful plan should help me respond to reality rather than create additional frustration.",
+        "On 12 October, I will review how this routine has worked. I intend to consider which tasks received enough attention and which time estimates were unrealistic. I will also assess whether the quiet morning session was practical. These observations will guide my next week\u2019s plan. I don\u2019t want to keep repeating an approach simply because it looked organized when first written down.",
+        "My goal is to develop a sustainable routine that supports meaningful progress while leaving room for ordinary life. I\u2019m seeking greater clarity about what deserves my attention, fewer avoidable distractions, and a more reasonable relationship with unfinished work. If a simple notebook and a brief weekly review can provide that structure, I would prefer them to another complicated productivity system.",
+        "I realize the environment affects whether I follow the plan. Having a phone within easy reach makes it tempting to check messages even when I\u2019ve decided to concentrate. Before the morning session, I will put my phone somewhere else and keep only the materials needed for the task on my desk. This is a small adjustment, but it may make the routine easier to maintain. If it becomes inconvenient or doesn\u2019t help, I can change it after the review. I don\u2019t want to treat this as a permanent rule. I want the process to stay practical, understandable, and simple enough to use on an ordinary busy day."
+      ],
+      "before_score": 0.9992934470876641,
+      "after_score": 0.9488671398075827,
+      "attempts": [
+        {
+          "version": "original",
+          "score": 0.9992934470876641
+        },
+        {
+          "version": "revision_1",
+          "score": 0.9488671398075827
+        },
+        {
+          "version": "revision_2",
+          "score": 0.9993121416381235
+        }
+      ],
+      "provider_usage": [
+        {
+          "provider": "anthropic",
+          "model": "claude-sonnet-4-5-20250929",
+          "section": 1,
+          "input_tokens": 850,
+          "output_tokens": 943
+        },
+        {
+          "provider": "openai",
+          "model": "gpt-4.1-mini",
+          "section": 1,
+          "input_tokens": 950,
+          "output_tokens": 622
+        },
+        {
+          "provider": "xai",
+          "model": "grok-4.3",
+          "section": 1,
+          "input_tokens": 1727,
+          "output_tokens": 5
+        },
+        {
+          "provider": "openai",
+          "model": "gpt-4.1-mini",
+          "section": 1,
+          "input_tokens": 804,
+          "output_tokens": 510
+        },
+        {
+          "provider": "anthropic",
+          "model": "claude-sonnet-4-5-20250929",
+          "section": 1,
+          "input_tokens": 874,
+          "output_tokens": 643
+        },
+        {
+          "provider": "xai",
+          "model": "grok-4.3",
+          "section": 1,
+          "input_tokens": 1695,
+          "output_tokens": 5
+        }
+      ],
+      "selected_version": "revision_1",
+      "flags": []
+    }
+  ],
+  "independent_cross_check": {
+    "model": "ShantanuT01/vanguard-ai-text-detector",
+    "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+    "results": [
+      {
+        "sample": "garden",
+        "original": 0.9923436045646667,
+        "original_sha256": "951c65c73b3bea6813d1682594e68e4953c71e05b5fce2d78620b514bd59acf1",
+        "revised": 1.0,
+        "revised_sha256": "669b6069c0f45ca80cceffe2a93b9e9b2876e96325eb1dd9791fa3676734109a"
+      },
+      {
+        "sample": "team_update",
+        "original": 1.0,
+        "original_sha256": "ca756c4ed94c8e660781cb37496df36e9e6da67e5f05e5520053542b90c434b0",
+        "revised": 1.0,
+        "revised_sha256": "2f40c31c9a78430582042397ee946d1c4a1bfd23a51f0b53d7121c126599f41e"
+      },
+      {
+        "sample": "weekly_plan",
+        "original": 1.0,
+        "original_sha256": "b2eebe0eef9f8266edbb3d5b827e0ae9d2ee2866935d1341440bc2367d3b3902",
+        "revised": 1.0,
+        "revised_sha256": "9d5c4266a144f8d808b2e85805b0e09e5f468fec59fb49b62922bff90d9a06c7"
+      }
+    ],
+    "notice": "Three synthetic samples only, not an accuracy benchmark. No training or threshold changes."
+  }
+}
