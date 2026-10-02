@@ -1,0 +1,88 @@
+{
+  "url": "https://txtzi.onrender.com",
+  "tested_at": "2026-10-02T15:34:55.099804+00:00",
+  "elapsed_seconds": 66.1,
+  "method": "meaning-first-v1",
+  "before_score": 0.999293462398949,
+  "after_score": 0.992579907006611,
+  "selected": "revision_1",
+  "attempts": [
+    {
+      "version": "original",
+      "score": 0.999293462398949
+    },
+    {
+      "version": "revision_1",
+      "score": 0.992579907006611
+    },
+    {
+      "version": "revision_2",
+      "score": 0.9973936080932617
+    }
+  ],
+  "provider_usage": [
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-5-20250929",
+      "section": 1,
+      "input_tokens": 849,
+      "output_tokens": 944
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4.1-mini",
+      "section": 1,
+      "input_tokens": 951,
+      "output_tokens": 595
+    },
+    {
+      "provider": "xai",
+      "model": "grok-4.3",
+      "section": 1,
+      "input_tokens": 1686,
+      "output_tokens": 5
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-4.1-mini",
+      "section": 1,
+      "input_tokens": 797,
+      "output_tokens": 444
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-5-20250929",
+      "section": 1,
+      "input_tokens": 803,
+      "output_tokens": 645
+    },
+    {
+      "provider": "xai",
+      "model": "grok-4.3",
+      "section": 1,
+      "input_tokens": 1587,
+      "output_tokens": 5
+    }
+  ],
+  "exports": {
+    "pdf": {
+      "bytes": 45270,
+      "status": 200
+    },
+    "docx": {
+      "bytes": 38022,
+      "status": 200
+    },
+    "pptx": {
+      "bytes": 32375,
+      "status": 200
+    },
+    "txt": {
+      "bytes": 2678,
+      "status": 200
+    }
+  },
+  "credits_charged_once": 499,
+  "automated_tests": 19,
+  "result_notice": "The live workflow completed successfully, but this result remains high on the detector and does not demonstrate a detector pass."
+}
