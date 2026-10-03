@@ -1,0 +1,217 @@
+{
+  "url": "https://txtzi.onrender.com",
+  "tested_at": "2026-10-03T21:16:22.512337+00:00",
+  "elapsed_seconds": 139.9,
+  "method": "meaning-first-v2",
+  "before_score": 0.9999592304229736,
+  "after_score": 0.9969536066055298,
+  "selected": "revision_1",
+  "attempts": [
+    {
+      "version": "original",
+      "score": 0.9999592304229736
+    },
+    {
+      "version": "revision_1",
+      "score": 0.9969536066055298
+    },
+    {
+      "version": "revision_2",
+      "score": 0.998837411403656
+    }
+  ],
+  "provider_usage": [
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "section": 1,
+      "input_tokens": 1383,
+      "output_tokens": 1089
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6.1-sol",
+      "section": 1,
+      "input_tokens": 1127,
+      "output_tokens": 480
+    },
+    {
+      "provider": "xai",
+      "model": "grok-4.7",
+      "section": 1,
+      "input_tokens": 3382,
+      "output_tokens": 4225
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6.1-sol",
+      "section": 1,
+      "input_tokens": 689,
+      "output_tokens": 899
+    },
+    {
+      "provider": "anthropic",
+      "model": "claude-sonnet-5-5",
+      "section": 1,
+      "input_tokens": 2004,
+      "output_tokens": 700
+    },
+    {
+      "provider": "xai",
+      "model": "grok-4.7",
+      "section": 1,
+      "input_tokens": 3384,
+      "output_tokens": 1152
+    }
+  ],
+  "structure_recomposed": false,
+  "revisions": [
+    {
+      "version": "revision_1",
+      "provider_usage": [
+        {
+          "provider": "anthropic",
+          "model": "claude-sonnet-5-5",
+          "section": 1,
+          "input_tokens": 1383,
+          "output_tokens": 1089
+        },
+        {
+          "provider": "openai",
+          "model": "gpt-6.1-sol",
+          "section": 1,
+          "input_tokens": 1127,
+          "output_tokens": 480
+        },
+        {
+          "provider": "xai",
+          "model": "grok-4.7",
+          "section": 1,
+          "input_tokens": 3382,
+          "output_tokens": 4225
+        }
+      ],
+      "flags": [
+        {
+          "block_id": "recompose-0001-p000",
+          "message": "Source review correction: Source says the exact amount has not been measured; draft drops “exact.”"
+        },
+        {
+          "block_id": "recompose-0001-p001",
+          "message": "Source review correction: Source is about not wanting pots to make opening difficult, not that they get in the way."
+        },
+        {
+          "block_id": "recompose-0001-p001",
+          "message": "Source review correction: Source contrasts starting with 3 containers against filling the area immediately."
+        },
+        {
+          "block_id": "recompose-0001-p001",
+          "message": "Source review correction: Source hedges with “should allow,” not a “can” purpose, and refers to a larger commitment."
+        },
+        {
+          "block_id": "recompose-0001-p001",
+          "message": "Source review correction: Source refers to any water underneath the containers, not specifically water collecting."
+        },
+        {
+          "block_id": "recompose-0001-p002",
+          "message": "Source review correction: Source requires the $60 to cover those items, including the plants themselves."
+        },
+        {
+          "block_id": "recompose-0001-p002",
+          "message": "Source review correction: Source is about not expecting to purchase another watering can, not about need."
+        }
+      ],
+      "writing_method": "meaning-first-v2",
+      "structure_recomposed": false,
+      "recompose_runs": [
+        {
+          "run_id": "recompose-0001",
+          "status": "accepted",
+          "reason": null,
+          "source_blocks": 5,
+          "output_blocks": 5,
+          "source_words": 369,
+          "output_words": 344,
+          "structure_changed": false
+        }
+      ]
+    },
+    {
+      "version": "revision_2",
+      "provider_usage": [
+        {
+          "provider": "openai",
+          "model": "gpt-6.1-sol",
+          "section": 1,
+          "input_tokens": 689,
+          "output_tokens": 899
+        },
+        {
+          "provider": "anthropic",
+          "model": "claude-sonnet-5-5",
+          "section": 1,
+          "input_tokens": 2004,
+          "output_tokens": 700
+        },
+        {
+          "provider": "xai",
+          "model": "grok-4.7",
+          "section": 1,
+          "input_tokens": 3384,
+          "output_tokens": 1152
+        }
+      ],
+      "flags": [],
+      "writing_method": "meaning-first-v2",
+      "structure_recomposed": true,
+      "recompose_runs": [
+        {
+          "run_id": "recompose-0001",
+          "status": "accepted",
+          "reason": null,
+          "source_blocks": 5,
+          "output_blocks": 5,
+          "source_words": 369,
+          "output_words": 342,
+          "structure_changed": true
+        }
+      ]
+    }
+  ],
+  "exports": {
+    "pdf": {
+      "status": 200,
+      "bytes": 44757,
+      "all_selected_blocks_present": true
+    },
+    "docx": {
+      "status": 200,
+      "bytes": 37653,
+      "all_selected_blocks_present": true
+    },
+    "pptx": {
+      "status": 200,
+      "bytes": 30767,
+      "all_selected_blocks_present": true
+    },
+    "txt": {
+      "status": 200,
+      "bytes": 1990,
+      "all_selected_blocks_present": true
+    }
+  },
+  "credits_charged_once": 499,
+  "unauthenticated_access_status": 401,
+  "protected_numeric_values_preserved": true,
+  "automated_tests": 50,
+  "result_notice": "The live job and all four complete exports passed functional checks. The built-in score remains near 100; the independent estimate fell to 65.11/100. This does not establish reliable detector avoidance.",
+  "independent_check": {
+    "name": "Vanguard",
+    "model": "ShantanuT01/vanguard-ai-text-detector",
+    "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+    "notice": "A separate local research check of this synthetic sample, not a production feature or a validated authorship probability. The estimate fell, but one example does not establish reliable detector avoidance.",
+    "before_score": 0.9923436045646667,
+    "after_score": 0.651145339012146
+  },
+  "deployed_code_commit": "b2b8cb60e9e2bb50317f8e4abe01160c4ea2b5a6"
+}

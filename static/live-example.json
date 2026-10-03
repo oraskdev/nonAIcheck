@@ -1,42 +1,63 @@
 {
-  "before_score": 0.999293462398949,
-  "after_score": 0.992579907006611,
-  "tested_at": "2026-10-02T15:34:55.099804+00:00",
-  "elapsed_seconds": 66.1,
-  "original": [
-    "A simpler way to plan my week",
-    "I want to establish a more effective approach to personal planning because my current routine leaves me feeling busy without a clear sense of progress. Throughout the week, I frequently move between messages, small errands, and unfinished tasks. Although each activity appears necessary at the time, the accumulated effect is that important work receives less attention than I intended.",
-    "My proposed solution is to introduce a short planning session at the beginning of each week. During this session, I will identify the responsibilities that genuinely require my attention and distinguish them from activities that can wait. Rather than creating an extensive list of ambitions, I want to select a small number of priorities that are realistic within the time available.",
-    "To support this approach, I plan to spend 30 minutes on one important task before opening my messages each morning. This period will provide an opportunity to concentrate without immediately reacting to other people's requests. I am not expecting to complete every significant task in a single sitting. The purpose is to make a deliberate start and reduce the tendency to postpone work that requires sustained attention.",
-    "Another important element of the plan is flexibility. Unexpected requests and changes in circumstances are inevitable, so filling every available hour would make the system unnecessarily fragile. I want to leave some space in the calendar and avoid interpreting a disrupted afternoon as evidence that the entire week has failed. A useful plan should help me respond to reality rather than create additional frustration.",
-    "On 12 October, I will review how the routine has worked. I intend to consider which tasks received enough attention, which estimates were unrealistic, and whether the quiet morning session was practical. These observations will guide the following week's plan. I do not want to keep repeating an approach simply because it looked organized when I first wrote it down.",
-    "Ultimately, my objective is to develop a sustainable routine that supports meaningful progress while leaving room for ordinary life. I am looking for greater clarity about what deserves attention, fewer avoidable distractions, and a more reasonable relationship with unfinished work. If a simple notebook and a brief weekly review can provide that structure, I would prefer them to another complicated productivity system.",
-    "I also recognize that the environment around me influences whether I follow the plan. A phone within easy reach makes it tempting to check messages, even when I have already decided to concentrate. Before the morning session, I will therefore put it somewhere else and keep only the materials required for the task on my desk. This is a small adjustment, but it may make the intended routine easier to maintain. If the arrangement becomes inconvenient or fails to help, I can change it after the review rather than treating it as a permanent rule. I want the process to remain practical, understandable, and simple enough to use on an ordinary busy day."
-  ],
-  "revised": [
-    "A simpler way to plan my week",
-    "I want to find a more effective way to plan my personal time. Right now, I often feel busy but without a clear sense of progress. During the week, I jump between messages, small errands, and unfinished tasks. Each of these seems necessary at the moment, but together they leave less time for the important work I intend to do.",
-    "My solution is to start each week with a short planning session. In that time, I will identify which responsibilities truly require my attention and separate them from those that can wait. Instead of making a long list of ambitions, I want to focus on a few realistic priorities that fit the time I have.",
-    "Each morning, I plan to spend 30 minutes on one important task before looking at any messages. This dedicated period will allow me to concentrate without immediately responding to others\u2019 requests. I don't expect to finish every big task in one go, but beginning deliberately can help reduce the habit of postponing work that needs sustained focus.",
-    "Flexibility is another key part of the plan. Unexpected requests and changing circumstances happen, and filling every available hour would make the system fragile. I want to leave space in my schedule and avoid seeing a disrupted afternoon as a failure of the whole week. A useful plan should help me respond to reality without creating extra frustration.",
-    "On 12 October, I will review how this new routine has worked. I will look at which tasks got enough attention and which time estimates were off. I also want to assess whether the quiet morning session was practical. These observations will inform the next week\u2019s plan. I don\u2019t want to repeat the same approach just because it seemed organized when first written down.",
-    "My goal is to build a sustainable routine that supports meaningful progress while leaving room for everyday life. I want more clarity about what really needs attention, fewer avoidable distractions, and a healthier relationship with unfinished work. If a simple notebook and a brief weekly review can offer that structure, I would prefer them over a complicated productivity system.",
-    "I recognize that my environment affects whether I stick to the plan. Having my phone nearby tempts me to check messages even when I\u2019ve decided to focus. Before the morning session, I\u2019ll put the phone away and keep only the materials I need on my desk. This small change might make it easier to maintain the routine. If it proves inconvenient or ineffective, I can adjust it after the review. I don\u2019t want this arrangement to become a fixed rule. I want the process to stay practical, clear, and simple enough to work on an ordinary busy day."
+  "title": "My balcony garden plan",
+  "tested_at": "3 October 2026",
+  "elapsed_seconds": 139.9,
+  "revisions": 2,
+  "assessments": 3,
+  "selected_version": "revision_1",
+  "before_score": 0.9999592304229736,
+  "after_score": 0.9969536066055298,
+  "attempts": [
+    {
+      "version": "original",
+      "score": 0.9999592304229736
+    },
+    {
+      "version": "revision_1",
+      "score": 0.9969536066055298
+    },
+    {
+      "version": "revision_2",
+      "score": 0.998837411403656
+    }
   ],
   "providers": [
     {
       "name": "Claude",
-      "model": "claude-sonnet-4-5-20250929"
+      "model": "claude-sonnet-5-5"
     },
     {
       "name": "OpenAI",
-      "model": "gpt-4.1-mini"
+      "model": "gpt-6.1-sol"
     },
     {
       "name": "Grok",
-      "model": "grok-4.3"
+      "model": "grok-4.7"
     }
   ],
-  "revisions": 2,
-  "assessments": 3
+  "original": [
+    "My balcony garden plan",
+    "I am planning to grow herbs on my balcony this spring because I would like to have fresh ingredients available when I cook. The balcony receives direct sunlight in the morning, but the neighboring building shades it during the afternoon. I have not measured the exact amount of sunlight yet, so I need to do that before choosing all the plants. My initial preference is for basil, mint, and parsley, although I may change this list after learning more about their needs.",
+    "The space is limited, and I do not want the pots to make it difficult to open the balcony door. I intend to start with 3 containers rather than filling the entire area immediately. This should allow me to learn how much maintenance is required before making a larger commitment. I also need to check that the containers have drainage holes and that any water underneath them will not cause problems for my downstairs neighbor.",
+    "My budget for the first stage is $60. That amount needs to cover the containers, potting mix, and the plants themselves. I already own a small watering can, so I do not expect to purchase another one. If the total cost is higher than expected, I will reduce the number of plants rather than increase the budget. I want this to remain a manageable experiment instead of becoming an expensive project.",
+    "Watering is the part I am most uncertain about. I sometimes travel for work, and I cannot assume that a neighbor will always be available to help. Before buying anything, I will consider what would happen if I were away for 4 days. A simple self-watering container might help, but I have not compared prices or checked whether it would be suitable for the plants I want.",
+    "I hope to begin on 18 April, provided that the weather is suitable and I have finished the necessary checks. After the first month, I will review which plants are doing well and whether I am enjoying the routine. If the experiment is successful, I may add another herb later. For now, my goal is simply to learn and grow a small amount of food without taking on more than I can comfortably maintain."
+  ],
+  "revised": [
+    "My balcony garden plan",
+    "I’m planning to grow herbs on my balcony this spring so I can have fresh ingredients available when I’m cooking. The balcony gets direct sunlight in the morning, but the neighboring building shades it in the afternoon. I still need to measure the exact amount of sunlight before choosing all the plants. Basil, mint, and parsley are my first choices, though that list may change once I learn more about what they need.",
+    "Space is limited, and I don’t want the pots to make it difficult to open the balcony door. I intend to start with 3 containers rather than fill the whole area immediately, which should allow me to learn how much maintenance is required before making a larger commitment. I also need to check that the containers have drainage holes and that any water underneath them won’t cause problems for the downstairs neighbor.",
+    "My budget for this first stage is $60, and that amount needs to cover the containers, potting mix, and the plants themselves. I already have a small watering can and don’t expect to purchase another. If the total comes out higher than I expect, I’ll buy fewer plants rather than increase the budget. I want this to be a manageable experiment, not an expensive project.",
+    "Watering is what I’m most unsure about. I sometimes travel for work, and I can’t count on a neighbor always being available to help. Before buying anything, I’ll think through what would happen if I were away for 4 days. A simple self-watering container might help, but I haven’t compared prices or checked whether one would suit the plants I want to grow.",
+    "I hope to begin on 18 April, as long as the weather is suitable and I’ve finished the necessary checks. After the first month, I’ll review which plants are doing well and whether I enjoy the routine. If the experiment works out, I may add another herb later. For now, I just want to learn and grow a small amount of food without taking on more than I can comfortably maintain."
+  ],
+  "downloads": true,
+  "independent_check": {
+    "name": "Vanguard",
+    "model": "ShantanuT01/vanguard-ai-text-detector",
+    "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+    "notice": "A separate local research check of this synthetic sample, not a production feature or a validated authorship probability. The estimate fell, but one example does not establish reliable detector avoidance.",
+    "before_score": 0.9923436045646667,
+    "after_score": 0.651145339012146
+  }
 }
