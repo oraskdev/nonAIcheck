@@ -41,7 +41,11 @@ def process_job(job_id, token):
                     raise RuntimeError("Job ownership changed")
         revised, report = pipeline.run(blocks, options, progress)
         before, after = report["before_detector"], report["after_detector"]
-        report.update({"before_detector": before, "after_detector": after, "original_words": count_words("\n".join(b["text"] for b in blocks)), "revised_words": count_words("\n".join(b["text"] for b in revised)), "changed_blocks": sum(a["text"] != b["text"] for a, b in zip(blocks, revised)), "completed_at": now(), "metadata": "Fresh exports omit original author fields, comments and revision history. This is not a watermark-removal or human-authorship certification."})
+        # Recomposed paragraphs have new identities and cannot be compared by position.
+        # A null edit count deliberately avoids presenting an inaccurate zip-based count.
+        changed_blocks = (None if report.get("structure_recomposed") else
+                          sum(a["text"] != b["text"] for a, b in zip(blocks, revised)))
+        report.update({"before_detector": before, "after_detector": after, "original_words": count_words("\n".join(b["text"] for b in blocks)), "revised_words": count_words("\n".join(b["text"] for b in revised)), "changed_blocks": changed_blocks, "revised_paragraphs": sum(b.get("type") == "paragraph" for b in revised), "completed_at": now(), "metadata": "Fresh exports omit original author fields, comments and revision history. This is not a watermark-removal or human-authorship certification."})
         with SessionLocal() as db:
             changed = db.execute(update(Document).where(Document.id == job_id, Document.status == "processing", Document.lease_token == token).values(result=encrypt(revised), report=encrypt(report), status="completed", progress=100, stage="Your refined document is ready", lease_until=None, updated_at=now()))
             if changed.rowcount and options.get("detector") and report["detector_comparison"]["assessment_unavailable"]:

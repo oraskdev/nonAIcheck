@@ -71,3 +71,13 @@ Never commit .env files, credentials, databases, test accounts or local runtime 
 - Measured score: 99.93 to 99.88 out of 100. This negligible reduction does not meet a claim of reliable detector evasion. No independent detector or statistical watermark removal was validated.
 - The public sample preview now shows the actual stored before/after text, model versions, processing time and detector results.
 - Live browser checks confirmed the sample now has 325 words, the detector is enabled, and switching to Hebrew turns off English-only scoring and updates the quote.
+
+## Meaning-based recomposition update (3 October 2026)
+
+- Added bounded prose recomposition with a source-linked meaning inventory, new paragraph boundaries, and explicit source corrections. Unresolved discrepancies retain the source section. Structured layouts use the existing path.
+- Upgraded configured models to Claude Sonnet 5.5, GPT-6.1 Sol and Grok 4.7. Claude uses native JSON schemas; OpenAI uses JSON mode. The application rejects incomplete responses.
+- Fixed signed/percentage/currency numeric protection, embedded-list preservation, sentence-initial correction casing, selected-version report metadata, full-document comparison display and recovery from a failed optional second attempt.
+- Independent detector experiments did not demonstrate reliable evasion. Specialized BART rewrites were rejected for invented facts, reversed instructions and broken text. Neither detector thresholds nor score formulas were changed. See `docs/rewrite-validation-oct3.md`.
+- No additional Render service, instance upgrade or detector subscription was purchased. Domain, email-delivery and Stripe limitations above remain.
+
+Release verification: 50 Python tests and four browser-view JavaScript tests passed, including signed values, embedded lists, selected-version metadata, missing assessments, optional failures, source-review rejection, native output formats and complete 12,000-word before/after rendering. These are application tests, not proof of detector avoidance.

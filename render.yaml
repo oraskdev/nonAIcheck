@@ -18,15 +18,19 @@ services:
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_MODEL
-        value: gpt-4.1-mini
+        value: gpt-6.1-sol
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: ANTHROPIC_MODEL
-        value: claude-sonnet-4-5-20250929
+        value: claude-sonnet-5-5
       - key: XAI_API_KEY
         sync: false
       - key: XAI_MODEL
-        value: grok-4.3
+        value: grok-4.7
+      - key: OPENAI_REASONING_EFFORT
+        value: medium
+      - key: XAI_REASONING_EFFORT
+        value: low
       - key: DETECTOR_PROVIDER
         value: local
       - key: GPTZERO_API_KEY

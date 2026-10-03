@@ -40,3 +40,11 @@ The Docker image builds a pinned Desklib English detector into `/opt/txtzi/detec
 For local development, install CPU PyTorch 2.14.1 and the requirements, then run `python scripts/prepare_detector.py /your/model/path` and set `DETECTOR_MODEL_DIR` accordingly. Numerical and integration smoke tests are documented in `RELEASE_STATUS.md`; this detector is an English beta, not an authorship certificate. Model licensing is in `THIRD_PARTY_NOTICES.md`.
 
 The optional legacy adapter remains available with `DETECTOR_PROVIDER=gptzero` and `GPTZERO_API_KEY`. No job silently switches providers.
+
+## Meaning-based prose rewriting
+
+Thorough editing and detector comparison use the `meaning-first-v2` workflow for eligible plain prose. A source-linked meaning inventory lets the writer combine or reorganize paragraphs. The third provider checks the entire draft against the original and makes explicit source corrections. Unresolved discrepancies, changed protected values or unexpected hidden characters restore the affected source section. Headings and short labels remain fixed; tables, slides and lists retain the structure-preserving workflow.
+
+The configured defaults are Claude Sonnet 5.5, GPT-6.1 Sol and Grok 4.7. Each completed run records the actual models used. Detector selection retains the lowest measured eligible result, and report metadata describes that selected version. A failed optional second revision keeps the completed result and returns the detector surcharge.
+
+The tests cover document integrity and application behavior, not universal detector evasion. Local experiments and limitations are recorded in `docs/rewrite-validation-oct3.md`.

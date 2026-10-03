@@ -37,10 +37,16 @@ class Settings:
         self.openai_key = os.getenv("OPENAI_API_KEY", "")
         self.anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
         self.xai_key = os.getenv("XAI_API_KEY", "")
-        self.openai_model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
-        # Use a dated Claude model by default so deployments are reproducible.
-        self.anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5-20250929")
-        self.xai_model = os.getenv("XAI_MODEL", "grok-4.3")
+        self.openai_model = os.getenv("OPENAI_MODEL", "gpt-6.1-sol")
+        # Model identifiers are recorded on every completed job.
+        self.anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5-5")
+        self.xai_model = os.getenv("XAI_MODEL", "grok-4.7")
+        self.openai_reasoning_effort = os.getenv("OPENAI_REASONING_EFFORT", "medium")
+        self.xai_reasoning_effort = os.getenv("XAI_REASONING_EFFORT", "low")
+        if self.openai_reasoning_effort not in ("low", "medium", "high"):
+            raise RuntimeError("OPENAI_REASONING_EFFORT must be low, medium or high")
+        if self.xai_reasoning_effort not in ("low", "medium", "high"):
+            raise RuntimeError("XAI_REASONING_EFFORT must be low, medium or high")
         self.detector_key = os.getenv("GPTZERO_API_KEY", "")
         self.detector_provider = os.getenv("DETECTOR_PROVIDER", "local")
         self.detector_model_dir = os.getenv("DETECTOR_MODEL_DIR", "/opt/txtzi/detector")

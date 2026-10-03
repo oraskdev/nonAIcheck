@@ -1,0 +1,372 @@
+{
+  "report_version": 1,
+  "tested_at": "2026-10-03",
+  "environment": "Local research; not a live production acceptance run",
+  "conclusion": "Reliable detector avoidance was not demonstrated. Lower scores on one detector failed to transfer to the independent checker. Every specialized BART candidate was rejected for factual or output-quality failures.",
+  "score_units": "Raw model estimates in [0,1]. Not calibrated authorship probabilities or percentages of AI-written words. Null means not measured.",
+  "detectors": [
+    {
+      "id": "desklib/ai-text-detector-v1.01",
+      "revision": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+      "precision": "BF16 matrix storage with FP32 computation",
+      "inference": "Pinned existing production scoring: masked mean pooling, single sigmoid head, 512-token overlapping windows with unique-token coverage weights",
+      "source": "https://huggingface.co/desklib/ai-text-detector-v1.01"
+    },
+    {
+      "id": "ShantanuT01/vanguard-ai-text-detector",
+      "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+      "precision": "FP32",
+      "inference": "ModernBERT single sigmoid head, complete inputs without truncation; research cross-check only",
+      "source": "https://huggingface.co/ShantanuT01/vanguard-ai-text-detector"
+    }
+  ],
+  "scoring_integrity": {
+    "weights_changed_to_reduce_scores": false,
+    "thresholds_changed": false,
+    "score_formula_changed": false,
+    "known_human_controls_selected_before_scoring": true
+  },
+  "synthetic_sources": [
+    {
+      "id": "garden",
+      "source_file": "docs/meaning-workflow-validation.json",
+      "word_count": 373,
+      "sha256": "951c65c73b3bea6813d1682594e68e4953c71e05b5fce2d78620b514bd59acf1"
+    },
+    {
+      "id": "team_update",
+      "source_file": "docs/meaning-workflow-validation.json",
+      "word_count": 382,
+      "sha256": "ca756c4ed94c8e660781cb37496df36e9e6da67e5f05e5520053542b90c434b0"
+    },
+    {
+      "id": "weekly_plan",
+      "source_file": "docs/meaning-workflow-validation.json",
+      "word_count": 493,
+      "sha256": "b2eebe0eef9f8266edbb3d5b827e0ae9d2ee2866935d1341440bc2367d3b3902"
+    }
+  ],
+  "known_human_controls": [
+    {
+      "id": "carroll_alice_1865",
+      "author": "Lewis Carroll",
+      "work": "Alice's Adventures in Wonderland, Chapter I",
+      "year": 1865,
+      "genre": "fiction",
+      "source": "https://www.gutenberg.org/files/11/11-h/11-h.htm",
+      "rights": "Public-domain original text, published 1865",
+      "selection": "Opening six prose paragraphs, ending 'hung upon pegs.' Source line breaks normalized to paragraph boundaries; wording and punctuation retained.",
+      "word_count": 399,
+      "sha256": "27b44c53f682edee26602f772ee82bea8c46e2790a6642801ffb53837282dc05",
+      "desklib_score": 0.03126265108585358,
+      "vanguard_score": 1.5840887499507517e-05
+    },
+    {
+      "id": "darwin_origin_introduction_1872",
+      "author": "Charles Darwin",
+      "work": "On the Origin of Species, Sixth Edition, Introduction",
+      "year": 1872,
+      "genre": "scientific nonfiction",
+      "source": "https://www.gutenberg.org/files/2009/2009-h/2009-h.htm",
+      "rights": "Public-domain original text, sixth edition published 1872",
+      "selection": "Introduction opening through 'some brief extracts from my manuscripts.' Source line breaks normalized to paragraph boundaries; wording and punctuation retained.",
+      "word_count": 348,
+      "sha256": "7711f0551694238f518972d8a6492abf8db7074bd97eebfffdb95230187cd208",
+      "desklib_score": 0.010163146071135998,
+      "vanguard_score": 6.467338380389265e-07
+    },
+    {
+      "id": "kennedy_inaugural_1961",
+      "author": "John F. Kennedy and presidential speechwriting staff",
+      "work": "President John F. Kennedy's Inaugural Address",
+      "year": 1961,
+      "genre": "public speech",
+      "source": "https://www.archives.gov/milestone-documents/president-john-f-kennedys-inaugural-address",
+      "rights": "Public-domain United States presidential address, 20 January 1961",
+      "selection": "Opening substantive paragraph through 'ended up inside.' Salutation omitted. Official transcript wording and double-hyphen punctuation retained.",
+      "word_count": 381,
+      "sha256": "519a914422d8848c94d0c18712cf309a6f51e7b1f9e087ccce9fe0561705ee18",
+      "desklib_score": 0.34947293996810913,
+      "vanguard_score": 0.0033193910494446754
+    }
+  ],
+  "api_writer_trials": [
+    {
+      "sample": "weekly_plan",
+      "provider": "anthropic",
+      "model": "claude-opus-5-5",
+      "seconds": 21.6,
+      "sha256": "8830211d32521d7b17358904ea951efa4a0473157d8b9db694d1fdb868b265b3",
+      "desklib_score": 0.9750389971516349,
+      "vanguard_score": 1.0
+    },
+    {
+      "sample": "weekly_plan",
+      "provider": "openai",
+      "model": "gpt-6-astra",
+      "seconds": 33.2,
+      "sha256": "d9129eb77b9772e22d0924216032739f9013b4f868d3ccf4c881fbac3f7c4e09",
+      "desklib_score": 0.9910311836462754,
+      "vanguard_score": 1.0
+    },
+    {
+      "sample": "weekly_plan",
+      "provider": "openai",
+      "model": "gpt-6.1-sol",
+      "seconds": 30.0,
+      "sha256": "1fef7c7fedaf8d833b6c790d8f0022c9c9685562de698989f2390c4df8fbf2f2",
+      "desklib_score": 0.9936837861972228,
+      "vanguard_score": null
+    }
+  ],
+  "agent_development_candidates": [
+    {
+      "name": "weekly-plan-recomposed-a",
+      "source_kind": "synthetic agent-written development candidate; not human-authored",
+      "model_revision": null,
+      "sha256": "f789a18fedea7a7e86adb8101e86aadf15dc9111485c1253d56952835dfd03cc",
+      "desklib_score": 0.7666553657415301,
+      "vanguard_score": 1.0
+    },
+    {
+      "name": "weekly-plan-recomposed-b",
+      "source_kind": "synthetic agent-written development candidate; not human-authored",
+      "model_revision": null,
+      "sha256": "e05956d0baf7b7be8f849b038a425e034f36eb013266add9df4f297eeef73578",
+      "desklib_score": 0.9936253278633285,
+      "vanguard_score": 0.9999997615814209
+    },
+    {
+      "name": "weekly-plan-recomposed-c",
+      "source_kind": "synthetic agent-written development candidate; not human-authored",
+      "model_revision": null,
+      "sha256": "0f63788abea74f4b51b01f53eb3290af9f613d5a4e980c837ed7f96ef654974d",
+      "desklib_score": 0.17390792071819305,
+      "vanguard_score": 0.9999831914901733
+    },
+    {
+      "name": "weekly-plan-recomposed-d",
+      "source_kind": "synthetic agent-written development candidate; not human-authored",
+      "model_revision": null,
+      "sha256": "3dfab9f4d849e550b72f0632e9135122b4a4da1cb1e470bb2a650c908ee415f1",
+      "desklib_score": 0.3438764534345487,
+      "vanguard_score": 0.9999533891677856
+    }
+  ],
+  "style_transfer_checks": [
+    {
+      "name": "garden-claude-opus-5-5",
+      "desklib": 0.9969156980514526,
+      "sha256": "0499939a60097363c010e51ae4e548a1710f1a1c4b3e86294a3a052976481009",
+      "vanguard": 0.9987747073173523
+    },
+    {
+      "name": "garden-gpt-6.1-sol",
+      "desklib": 0.9991195797920227,
+      "sha256": "6a6a8a76a98672cbedffdf63a2c5b7e8ce4db0d27d78f4b73f1c3eb6cc77be7b",
+      "vanguard": 0.9988164901733398
+    },
+    {
+      "name": "team_update-claude-opus-5-5",
+      "desklib": 0.9902102947235107,
+      "sha256": "be8f60596f75d52d32453ae0dbf68e652d5770016a2537b2760bd5794725c386",
+      "vanguard": 1.0
+    },
+    {
+      "name": "team_update-gpt-6.1-sol",
+      "desklib": 0.9959555864334106,
+      "sha256": "4a07b0113e49fb253b13cab52d406bf253455b4448b4f2bd9b1ac4188889d9b5",
+      "vanguard": 1.0
+    }
+  ],
+  "plain_text_output_checks": [
+    {
+      "name": "garden-claude-opus-5-5",
+      "desklib": 0.9991752505302429,
+      "sha256": "8aaf0bc39c562c5a6d8b14d92c70d4e31a13ef5ce0dbf2738247af224ad6537f",
+      "vanguard": 0.999762237071991
+    },
+    {
+      "name": "team_update-claude-opus-5-5",
+      "desklib": 0.9855524897575378,
+      "sha256": "649c4c8213242b42b42201df25d0777618585b24c6e9c0eeae8faeb84d541c72",
+      "vanguard": 1.0
+    }
+  ],
+  "specialized_bart": {
+    "model": "rudra496/stealthhumanizer-bart",
+    "revision": "425b1eeef7f88e6db3d49014ff397ae2fffdcc99",
+    "fine_tune_license": "MIT (model card)",
+    "base_model": "facebook/bart-large",
+    "base_license": "Apache-2.0",
+    "license_sources": [
+      "https://huggingface.co/rudra496/stealthhumanizer-bart/blob/425b1eeef7f88e6db3d49014ff397ae2fffdcc99/README.md",
+      "https://huggingface.co/facebook/bart-large"
+    ],
+    "ctranslate2": "4.8.2",
+    "quantization": "int8",
+    "trust_remote_code": false,
+    "preparation_seconds": 43.79,
+    "int8_files": {
+      "config.json": 223,
+      "shared_vocabulary.json": 802241,
+      "model.bin": 415083072
+    },
+    "candidate_count": 6,
+    "accepted_count": 0,
+    "trials": [
+      {
+        "file": "garden-candidate-1.json",
+        "sample": "garden",
+        "candidate": 1,
+        "seconds": 14.97,
+        "peak_process_rss_mib": 486.67,
+        "complete": true,
+        "numeric_tokens_preserved": false,
+        "accepted": false,
+        "manual_findings": [
+          "Invented teacher friend, two-liter vessel and one-gallon container",
+          "Lost planned travel and start-date details",
+          "Unfounded assertion that a plant is a weed"
+        ]
+      },
+      {
+        "file": "garden-candidate-2.json",
+        "sample": "garden",
+        "candidate": 2,
+        "seconds": 16.45,
+        "peak_process_rss_mib": 486.67,
+        "complete": false,
+        "numeric_tokens_preserved": false,
+        "accepted": false,
+        "manual_findings": [
+          "Three containers became three existing plus three new",
+          "Invented years of gardening experience and yard/patio",
+          "A paragraph collapsed to a single word; budget and date omitted"
+        ]
+      },
+      {
+        "file": "team_update-candidate-1.json",
+        "sample": "team_update",
+        "candidate": 1,
+        "seconds": 19.52,
+        "peak_process_rss_mib": 486.67,
+        "complete": false,
+        "numeric_tokens_preserved": false,
+        "accepted": false,
+        "manual_findings": [
+          "150-word maximum became a minimum",
+          "Invented forum thread and project members",
+          "Several generated paragraphs incomplete"
+        ]
+      },
+      {
+        "file": "team_update-candidate-2.json",
+        "sample": "team_update",
+        "candidate": 2,
+        "seconds": 14.45,
+        "peak_process_rss_mib": 486.67,
+        "complete": false,
+        "numeric_tokens_preserved": false,
+        "accepted": false,
+        "manual_findings": [
+          "Invented IRC channels and Reddit-style contact",
+          "A paragraph became random-letter gibberish",
+          "Project update cadence changed to once a year"
+        ]
+      },
+      {
+        "file": "weekly_plan-candidate-1.json",
+        "sample": "weekly_plan",
+        "candidate": 1,
+        "seconds": 25.54,
+        "peak_process_rss_mib": 486.67,
+        "complete": false,
+        "numeric_tokens_preserved": false,
+        "accepted": false,
+        "manual_findings": [
+          "Invented four-year goals and a reading/book problem",
+          "Invented wife and previous phone locations",
+          "Dates and numbers lost; multiple paragraphs incomplete"
+        ]
+      },
+      {
+        "file": "weekly_plan-candidate-2.json",
+        "sample": "weekly_plan",
+        "candidate": 2,
+        "seconds": 19.44,
+        "peak_process_rss_mib": 486.67,
+        "complete": false,
+        "numeric_tokens_preserved": false,
+        "accepted": false,
+        "manual_findings": [
+          "Random-letter string replaces a paragraph",
+          "Keep-phone-away rule reversed to keeping phone at desk",
+          "Invented school schedule, devotions and 8 AM"
+        ]
+      }
+    ],
+    "reference_check": "One paragraph generated greedily with original FP32 weights also invented content and produced malformed contractions. INT8 output differs, but the failure is present in both. See parity.json.",
+    "deployed": false
+  },
+  "detector_sanity_findings": [
+    "Head, sigmoid direction, attention masking and pooling match Desklib's own model card.",
+    "All three known-human controls scored below 0.5 on both fixed detectors. This only excludes an obvious always-positive failure on these inputs.",
+    "Stored garden score reproduced exactly; its numerical match to another earlier sample was not evidence of a cache bug.",
+    "Prior independent FP32 comparison was numerical parity testing, not a model-accuracy benchmark; see docs/selfhost-model-smoke.json."
+  ],
+  "software_regression_checks": {
+    "test_file": "tests/test_pipeline_selection.py",
+    "test_count": 6,
+    "command": "python -m unittest discover -s tests -p test_pipeline_selection.py -v",
+    "status": "passed",
+    "scope": "Selected metadata, variable paragraph count, exact cleaned detector inputs, usage aggregation, optional retry failure and invalid scores. Mocked providers; not an efficacy benchmark."
+  },
+  "limitations": [
+    "Three synthetic development documents and three famous historical human excerpts are not representative samples, statistically held-out evaluation or an accuracy benchmark.",
+    "Known human excerpts may overlap model training data and differ from contemporary user writing.",
+    "Development prompts and styles were chosen while inspecting these examples; no generalization or pass-rate claim is justified.",
+    "The two detectors are independent model implementations, not commercial-provider acceptance tests.",
+    "API model IDs were recorded; their underlying internal weight revisions are not available.",
+    "Single-thread local resource measurements do not establish Render CPU latency or concurrency capacity.",
+    "No result establishes human authorship, universal watermark removal or guaranteed undetectability."
+  ],
+  "evidence_files": [
+    "docs/meaning-workflow-validation.json",
+    "test-artifacts/oct3/initial-scores.json",
+    "test-artifacts/oct3/writer-scores.json",
+    "test-artifacts/oct3/vanguard-scores.json",
+    "test-artifacts/oct3/transfer-scores.json",
+    "test-artifacts/oct3/plaintext-scores.json",
+    "test-artifacts/oct3/bart/manual-review.json",
+    "test-artifacts/oct3/bart/parity.json"
+  ],
+  "integrated_prototype": {
+    "notice": "Local prototype before native Claude structured output; optional second attempt unavailable for team and weekly. Not production acceptance.",
+    "model": "ShantanuT01/vanguard-ai-text-detector",
+    "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+    "samples": [
+      {
+        "sample": "garden",
+        "desklib_original": 0.9999592304229736,
+        "desklib_selected": 0.9983845949172974,
+        "vanguard_source": 0.9923436045646667,
+        "vanguard_output": 0.9997373223304749
+      },
+      {
+        "sample": "team_update",
+        "desklib_original": 0.9999475479125977,
+        "desklib_selected": 0.999352753162384,
+        "vanguard_source": 1.0,
+        "vanguard_output": 0.9999996423721313
+      },
+      {
+        "sample": "weekly_plan",
+        "desklib_original": 0.9992934470876641,
+        "desklib_selected": 0.9992934470876641,
+        "vanguard_source": 1.0,
+        "vanguard_output": 1.0
+      }
+    ]
+  }
+}

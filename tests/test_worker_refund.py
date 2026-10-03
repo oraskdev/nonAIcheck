@@ -46,3 +46,33 @@ class WorkerRefundTests(unittest.TestCase):
         with self.sessions() as db:
             self.assertEqual(db.get(User, self.user_id).credits, 500)
             self.assertEqual(db.get(Document, self.doc_id).status, "failed")
+
+    def test_recomposed_result_counts_every_paragraph_without_positional_edit_count(self):
+        revised = [
+            {"id": "new-title", "type": "heading", "text": "A revised plan"},
+            {"id": "new-1", "type": "paragraph", "text": "I will set aside 30 minutes."},
+            {"id": "new-2", "type": "paragraph", "text": "The task can remain unfinished."},
+            {"id": "new-3", "type": "paragraph", "text": "I will review the routine."},
+        ]
+        report = {"before_detector": {}, "after_detector": {}, "structure_recomposed": True,
+                  "detector_comparison": {"assessment_unavailable": False}}
+        with patch("app.worker.SessionLocal", self.sessions), patch("app.worker.pipeline.run", return_value=(revised, report)):
+            worker.process_job(self.doc_id, "lease")
+        with self.sessions() as db:
+            doc = db.get(Document, self.doc_id)
+            self.assertEqual(doc.status, "completed")
+            self.assertEqual(decrypt(doc.result), revised)
+            stored = decrypt(doc.report)
+            self.assertEqual(stored["revised_paragraphs"], 3)
+            self.assertIsNone(stored["changed_blocks"])
+            self.assertEqual(db.get(User, self.user_id).credits, 1)
+
+    def test_structure_preserving_result_keeps_edited_passage_count(self):
+        revised = [{**self.blocks[0], "text": "For 30 minutes, I will work on my personal plan."}]
+        report = {"before_detector": {}, "after_detector": {},
+                  "detector_comparison": {"assessment_unavailable": False}}
+        with patch("app.worker.SessionLocal", self.sessions), patch("app.worker.pipeline.run", return_value=(revised, report)):
+            worker.process_job(self.doc_id, "lease")
+        with self.sessions() as db:
+            stored = decrypt(db.get(Document, self.doc_id).report)
+            self.assertEqual(stored["changed_blocks"], 1)
