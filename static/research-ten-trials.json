@@ -1,0 +1,772 @@
+{
+  "tested_at": "2026-10-03T21:59:59.785162+00:00",
+  "summary": "Ten new revisions completed all three provider stages. Three source-fidelity corrections were then scored as separate variants. The selected corrected draft reduces both detector estimates relative to the previous live output.",
+  "notice": "This is a local experiment on one synthetic English document. The three corrected variants replace “expect to need another” with the source-faithful “expect to buy another”; their exact final texts were measured again. All original attempts remain visible. Both detectors were used to select the result, so neither is a held-out evaluation. No general detector avoidance or watermark-removal claim follows from these measurements.",
+  "models": [
+    {
+      "name": "Claude · planner or writer",
+      "model": "claude-sonnet-5-5"
+    },
+    {
+      "name": "OpenAI · writer or planner",
+      "model": "gpt-6.1-sol"
+    },
+    {
+      "name": "Grok · source reviewer",
+      "model": "grok-4.7"
+    }
+  ],
+  "selection_rule": "Consider only candidates that clear source-fidelity audit and protected-value checks. Prefer candidates strictly lower than the previous-best baseline on BOTH fixed detectors. Among those minimize max(Desklib/baselineDesklib,Vanguard/baselineVanguard). Otherwise retain baseline and report single-detector changes separately. Scores do not establish authorship or guarantee other detector outcomes.",
+  "original": {
+    "text": "My balcony garden plan\n\nI am planning to grow herbs on my balcony this spring because I would like to have fresh ingredients available when I cook. The balcony receives direct sunlight in the morning, but the neighboring building shades it during the afternoon. I have not measured the exact amount of sunlight yet, so I need to do that before choosing all the plants. My initial preference is for basil, mint, and parsley, although I may change this list after learning more about their needs.\n\nThe space is limited, and I do not want the pots to make it difficult to open the balcony door. I intend to start with 3 containers rather than filling the entire area immediately. This should allow me to learn how much maintenance is required before making a larger commitment. I also need to check that the containers have drainage holes and that any water underneath them will not cause problems for my downstairs neighbor.\n\nMy budget for the first stage is $60. That amount needs to cover the containers, potting mix, and the plants themselves. I already own a small watering can, so I do not expect to purchase another one. If the total cost is higher than expected, I will reduce the number of plants rather than increase the budget. I want this to remain a manageable experiment instead of becoming an expensive project.\n\nWatering is the part I am most uncertain about. I sometimes travel for work, and I cannot assume that a neighbor will always be available to help. Before buying anything, I will consider what would happen if I were away for 4 days. A simple self-watering container might help, but I have not compared prices or checked whether it would be suitable for the plants I want.\n\nI hope to begin on 18 April, provided that the weather is suitable and I have finished the necessary checks. After the first month, I will review which plants are doing well and whether I am enjoying the routine. If the experiment is successful, I may add another herb later. For now, my goal is simply to learn and grow a small amount of food without taking on more than I can comfortably maintain.",
+    "sha256": "951c65c73b3bea6813d1682594e68e4953c71e05b5fce2d78620b514bd59acf1",
+    "desklib": 0.9999592304229736,
+    "desklib_measurement": {
+      "status": "assessed",
+      "provider": "txtzi detector",
+      "provider_id": "local",
+      "ai_score": 0.9999592304229736,
+      "score_label": "AI-likelihood score",
+      "score_kind": "window_weighted_model_estimate",
+      "model": "desklib/ai-text-detector-v1.01",
+      "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+      "precision": "bfloat16 matrix storage; float32 compute",
+      "sections": [
+        {
+          "section": 1,
+          "ai_score": 0.9999592304229736,
+          "weight": 414
+        }
+      ],
+      "tokens_assessed": 414,
+      "coverage": "full_document",
+      "confidence": "Not calibrated",
+      "language": "English",
+      "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+    },
+    "vanguard": 0.9923436045646667,
+    "vanguard_measurement": {
+      "ai_score": 0.9923436045646667,
+      "model": "ShantanuT01/vanguard-ai-text-detector",
+      "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+      "tokens_assessed": 430,
+      "coverage": "full_document"
+    }
+  },
+  "baseline": {
+    "text": "My balcony garden plan\n\nI’m planning to grow herbs on my balcony this spring so I can have fresh ingredients available when I’m cooking. The balcony gets direct sunlight in the morning, but the neighboring building shades it in the afternoon. I still need to measure the exact amount of sunlight before choosing all the plants. Basil, mint, and parsley are my first choices, though that list may change once I learn more about what they need.\n\nSpace is limited, and I don’t want the pots to make it difficult to open the balcony door. I intend to start with 3 containers rather than fill the whole area immediately, which should allow me to learn how much maintenance is required before making a larger commitment. I also need to check that the containers have drainage holes and that any water underneath them won’t cause problems for the downstairs neighbor.\n\nMy budget for this first stage is $60, and that amount needs to cover the containers, potting mix, and the plants themselves. I already have a small watering can and don’t expect to purchase another. If the total comes out higher than I expect, I’ll buy fewer plants rather than increase the budget. I want this to be a manageable experiment, not an expensive project.\n\nWatering is what I’m most unsure about. I sometimes travel for work, and I can’t count on a neighbor always being available to help. Before buying anything, I’ll think through what would happen if I were away for 4 days. A simple self-watering container might help, but I haven’t compared prices or checked whether one would suit the plants I want to grow.\n\nI hope to begin on 18 April, as long as the weather is suitable and I’ve finished the necessary checks. After the first month, I’ll review which plants are doing well and whether I enjoy the routine. If the experiment works out, I may add another herb later. For now, I just want to learn and grow a small amount of food without taking on more than I can comfortably maintain.",
+    "sha256": "d2c4ed589cad20ca1c50571d50b3c062f584b524f19d9816ca202b118171c58d",
+    "desklib": 0.9969534873962402,
+    "desklib_measurement": {
+      "status": "assessed",
+      "provider": "txtzi detector",
+      "provider_id": "local",
+      "ai_score": 0.9969534873962402,
+      "score_label": "AI-likelihood score",
+      "score_kind": "window_weighted_model_estimate",
+      "model": "desklib/ai-text-detector-v1.01",
+      "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+      "precision": "bfloat16 matrix storage; float32 compute",
+      "sections": [
+        {
+          "section": 1,
+          "ai_score": 0.9969534873962402,
+          "weight": 412
+        }
+      ],
+      "tokens_assessed": 412,
+      "coverage": "full_document",
+      "confidence": "Not calibrated",
+      "language": "English",
+      "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+    },
+    "vanguard": 0.651145339012146,
+    "vanguard_measurement": {
+      "ai_score": 0.651145339012146,
+      "model": "ShantanuT01/vanguard-ai-text-detector",
+      "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+      "tokens_assessed": 428,
+      "coverage": "full_document"
+    }
+  },
+  "selected": {
+    "id": "09-repaired",
+    "name": "Trial 9 · source-fidelity correction",
+    "writer": "OpenAI",
+    "from_baseline": true,
+    "parent_trial": 9,
+    "eligible": true,
+    "audit_notes": [
+      "Changed only the anticipated need for another watering can back to the source-stated expectation about purchasing one. All other text is byte-for-byte unchanged. The complete parent output was independently checked against all 32 source claims; G17 was its only identified fidelity issue. The corrected output passes G17 and has no unresolved semantic or obvious readability issue. No detector scores were consulted during this review."
+    ],
+    "repairs": [
+      {
+        "find": "don’t expect to need another",
+        "replace": "don’t expect to buy another",
+        "reason": "G17: preserve expected purchase, not a prediction about need."
+      }
+    ],
+    "seconds": 57.7,
+    "text": "My balcony garden plan\n\nI’m planning to grow herbs on my balcony this spring so I have fresh ingredients available when I cook. It gets direct sunlight in the morning, but the neighboring building shades it in the afternoon. I haven’t measured exactly how much sunlight it gets yet, and I need to do that before choosing all the plants. I’m leaning toward basil, mint, and parsley, though I may change that list after learning more about what they need.\n\nI plan to start with 3 containers instead of filling the balcony right away, so I can find out how much care they need before adding more. There isn’t much space, and I don’t want the pots to get in the way of opening the balcony door. I still need to check that the containers have drainage holes and that water underneath them won’t cause problems for the downstairs neighbor.\n\nWatering is the part I’m least sure about. I sometimes travel for work, so I can’t assume a neighbor will always be available to help. Before I buy anything, I’ll think through what would happen if I were away for 4 days. A simple self-watering container might help, but I haven’t compared prices or checked whether it would suit the plants I want.\n\nI have a budget of $60 for this first stage, including containers, potting mix, and plants. I already own a small watering can and don’t expect to buy another. If the total costs more than I expect, I’ll buy fewer plants rather than raise the budget. I want a manageable experiment, not an expensive project.\n\nI hope to start on 18 April, if the weather is suitable and I’ve finished the checks I need to make. After the first month, I’ll look at which plants are doing well and whether I’m enjoying the routine. If it works out, I may add another herb later. For now, my goal is to learn and grow a small amount of food without taking on more than I can comfortably care for.",
+    "sha256": "fce1ae6a50dc24b01384f6ad10c7ec47fdf96c7c9d5263cfc264e300d2fab2a2",
+    "desklib": 0.6161035299301147,
+    "desklib_measurement": {
+      "status": "assessed",
+      "provider": "txtzi detector",
+      "provider_id": "local",
+      "ai_score": 0.6161035299301147,
+      "score_label": "AI-likelihood score",
+      "score_kind": "window_weighted_model_estimate",
+      "model": "desklib/ai-text-detector-v1.01",
+      "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+      "precision": "bfloat16 matrix storage; float32 compute",
+      "sections": [
+        {
+          "section": 1,
+          "ai_score": 0.6161035299301147,
+          "weight": 412
+        }
+      ],
+      "tokens_assessed": 412,
+      "coverage": "full_document",
+      "confidence": "Not calibrated",
+      "language": "English",
+      "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+    },
+    "vanguard": 0.46178722381591797,
+    "vanguard_measurement": {
+      "ai_score": 0.46178722381591797,
+      "model": "ShantanuT01/vanguard-ai-text-detector",
+      "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+      "tokens_assessed": 428,
+      "coverage": "full_document"
+    }
+  },
+  "trials": [
+    {
+      "id": 1,
+      "name": "Watering first",
+      "writer": "OpenAI",
+      "from_baseline": false,
+      "eligible": true,
+      "audit_notes": [
+        "All 32 source claims preserved. Watering is reordered first without converting the 4-day absence into a booked trip. Tentative plants, pre-purchase checks, conditional start, and conditional expansion remain intact."
+      ],
+      "seconds": 77.95,
+      "text": "My balcony garden plan\n\nBefore buying anything, I will consider what would happen if I were away for 4 days. Watering is the part I’m least sure about: I sometimes travel for work, and I can’t count on a neighbor always being available to help. A simple self-watering container might be useful, but I haven’t compared prices or checked whether it would suit the plants I want to grow.\n\nI’m planning a small balcony herb garden this spring so I can have fresh ingredients available when I cook. Basil, mint, and parsley are my first choices, though that list may change as I learn more about what they need. The balcony gets direct morning sun, then shade from the neighboring building in the afternoon. I still need to measure how much sunlight it gets before choosing all the plants.\n\nWith limited space, I want to keep the pots out of the way of the balcony door so it remains easy to open. I intend to start with 3 containers rather than fill the whole area, giving myself a chance to find out how much maintenance is involved before committing to more. I also need to check that the containers have drainage holes and that water collecting underneath them won’t cause problems for the downstairs neighbor.\n\nMy budget for this first stage is $60, covering the containers, potting mix, and plants. I already have a small watering can and don’t expect to purchase another. If the total comes to more than I expect, I’ll buy fewer plants rather than increase the budget. I want this to remain a manageable experiment, not turn into an expensive project.\n\nI hope to begin on 18 April, as long as the weather is suitable and I’ve finished the necessary checks. After the first month, I’ll look at which plants are doing well and whether I enjoy the routine. If it works out, I may add another herb later. For now, I just want to learn and grow a little food without taking on more than I can comfortably maintain.",
+      "sha256": "6226724c367a2e2767dfd461f1b7ddb9c31450e96e79010247f098511f0e3890",
+      "desklib": 0.9954251646995544,
+      "desklib_measurement": {
+        "status": "assessed",
+        "provider": "txtzi detector",
+        "provider_id": "local",
+        "ai_score": 0.9954251646995544,
+        "score_label": "AI-likelihood score",
+        "score_kind": "window_weighted_model_estimate",
+        "model": "desklib/ai-text-detector-v1.01",
+        "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+        "precision": "bfloat16 matrix storage; float32 compute",
+        "sections": [
+          {
+            "section": 1,
+            "ai_score": 0.9954251646995544,
+            "weight": 402
+          }
+        ],
+        "tokens_assessed": 402,
+        "coverage": "full_document",
+        "confidence": "Not calibrated",
+        "language": "English",
+        "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+      },
+      "vanguard": 0.273844450712204,
+      "vanguard_measurement": {
+        "ai_score": 0.273844450712204,
+        "model": "ShantanuT01/vanguard-ai-text-detector",
+        "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+        "tokens_assessed": 418,
+        "coverage": "full_document"
+      }
+    },
+    {
+      "id": 2,
+      "name": "Budget first",
+      "writer": "Claude",
+      "from_baseline": false,
+      "eligible": false,
+      "audit_notes": [
+        "All 32 source claims preserved; no unsupported substantive addition found. Final prose contains a broken punctuation artifact.",
+        "A dangling comma followed by a period remains in the final reviewed output. The trial must not be promoted as polished output as-is."
+      ],
+      "seconds": 68.98,
+      "text": "My balcony garden plan\n\nI plan to grow herbs on my balcony this spring so that I have fresh ingredients on hand when I cook. I want it to stay a manageable experiment rather than an expensive project, . The first-stage budget is $60. That has to cover the containers, the potting mix, and the plants. I already own a small watering can and don't expect to buy another. If the total comes out higher than I expect, I will cut back on the number of plants rather than raise the budget.\n\nI intend to start with 3 containers rather than filling the whole area at once. Space is tight, and I don't want pots getting in the way of opening the balcony door. Starting small should show me how much maintenance this really takes before I commit to anything larger. I also need to check that the containers have drainage holes and that water collecting underneath won't cause problems for my downstairs neighbor.\n\nI haven't measured the exact amount of sunlight yet. The balcony gets direct sun in the morning but is shaded by the neighboring building in the afternoon, and I need to measure it before choosing all the plants. For now I lean toward basil, mint, and parsley, though I may change that list once I know more about what they need.\n\nWatering is what I'm least sure about. I sometimes travel for work and can't count on a neighbor always being available to help. Before buying anything, I will think through what would happen if I were away for 4 days. A simple self-watering container might help, but I haven't compared prices or checked whether it suits the plants I want.\n\nI hope to begin on 18 April, as long as the weather is suitable and I've finished those checks. After the first month I'll look at which plants are doing well and whether I actually enjoy the routine. If it goes well, I may add another herb later. For now the goal is to learn and to grow a small amount of food without taking on more than I can comfortably look after.",
+      "sha256": "1820152d6c0c38eaeb45585493607eda9813a68aad37e93cd13a8a79ef1d2fe9",
+      "desklib": 0.9978973865509033,
+      "desklib_measurement": {
+        "status": "assessed",
+        "provider": "txtzi detector",
+        "provider_id": "local",
+        "ai_score": 0.9978973865509033,
+        "score_label": "AI-likelihood score",
+        "score_kind": "window_weighted_model_estimate",
+        "model": "desklib/ai-text-detector-v1.01",
+        "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+        "precision": "bfloat16 matrix storage; float32 compute",
+        "sections": [
+          {
+            "section": 1,
+            "ai_score": 0.9978973865509033,
+            "weight": 414
+          }
+        ],
+        "tokens_assessed": 414,
+        "coverage": "full_document",
+        "confidence": "Not calibrated",
+        "language": "English",
+        "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+      },
+      "vanguard": 0.9997755885124207,
+      "vanguard_measurement": {
+        "ai_score": 0.9997755885124207,
+        "model": "ShantanuT01/vanguard-ai-text-detector",
+        "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+        "tokens_assessed": 421,
+        "coverage": "full_document"
+      }
+    },
+    {
+      "id": 3,
+      "name": "Balcony first",
+      "writer": "OpenAI",
+      "from_baseline": false,
+      "eligible": true,
+      "audit_notes": [
+        "All 32 source claims preserved across four body paragraphs. Moving balcony constraints and herbs together does not change chronology or uncertainty; the start remains conditional on both weather and completed checks."
+      ],
+      "seconds": 77.76,
+      "text": "My balcony garden plan\n\nMy balcony gets direct sunlight in the morning, but the neighboring building shades it in the afternoon. Space is limited, and I don't want the pots to make it difficult to open the balcony door. I'm planning to grow herbs there this spring so I have fresh ingredients when I cook. I intend to start with 3 containers rather than fill the whole area immediately. This should allow me to learn how much maintenance is required before making a larger commitment. I still need to check that the containers have drainage holes and that any water underneath them will not cause problems for the downstairs neighbor.\n\nBasil, mint, and parsley are my first choices, though I may change that list after learning more about their needs. I haven't measured exactly how much sunlight the balcony gets, and I need to do that before choosing all the plants. Watering is my biggest uncertainty: I sometimes travel for work, and I can't assume a neighbor will always be available to help. Before buying anything, I'll consider what would happen if I were away for 4 days. A simple self-watering container might help, but I haven't compared prices or checked whether it would suit the herbs I want to grow.\n\nMy budget for this first stage is $60, including the containers, potting mix, and plants. I already own a small watering can, so I don't expect to purchase another. If the total cost is higher than I expect, I'll buy fewer plants rather than increase the budget. I want this to remain a manageable experiment, not become an expensive project.\n\nI hope to begin on 18 April, as long as the weather is suitable and I've finished the necessary checks. After the first month, I'll look at which plants are doing well and whether I enjoy the routine. If the experiment succeeds, I may add another herb later. For now, I just want to learn and grow a small amount of food without taking on more than I can comfortably maintain.",
+      "sha256": "7637311db834147f7235cfbeded30cae048f6cf994617f0fca626f9dba0017ea",
+      "desklib": 0.9998903274536133,
+      "desklib_measurement": {
+        "status": "assessed",
+        "provider": "txtzi detector",
+        "provider_id": "local",
+        "ai_score": 0.9998903274536133,
+        "score_label": "AI-likelihood score",
+        "score_kind": "window_weighted_model_estimate",
+        "model": "desklib/ai-text-detector-v1.01",
+        "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+        "precision": "bfloat16 matrix storage; float32 compute",
+        "sections": [
+          {
+            "section": 1,
+            "ai_score": 0.9998903274536133,
+            "weight": 404
+          }
+        ],
+        "tokens_assessed": 404,
+        "coverage": "full_document",
+        "confidence": "Not calibrated",
+        "language": "English",
+        "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+      },
+      "vanguard": 0.9999980926513672,
+      "vanguard_measurement": {
+        "ai_score": 0.9999980926513672,
+        "model": "ShantanuT01/vanguard-ai-text-detector",
+        "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+        "tokens_assessed": 409,
+        "coverage": "full_document"
+      }
+    },
+    {
+      "id": 4,
+      "name": "Tentative plant choices",
+      "writer": "Claude",
+      "from_baseline": false,
+      "eligible": true,
+      "audit_notes": [
+        "All 32 claims preserved. Plant choices remain provisional, checks remain outstanding, and the start and later expansion retain their conditions. Readable final prose without a material ambiguity or punctuation defect."
+      ],
+      "seconds": 101.22,
+      "text": "My balcony garden plan\n\nThis spring I plan to grow herbs on my balcony so I have fresh ingredients on hand when I cook. For now my choices are basil, mint and parsley, but that list is provisional, and I may change it once I know more about what each of them needs. The balcony gets direct sun in the morning and is shaded by the neighboring building in the afternoon. I haven't measured the exact amount of sunlight yet, and I need to do that before I settle on all the plants.\n\nSpace is limited, and I don't want the pots to make it hard to open the balcony door. I intend to start with 3 containers rather than fill the whole area at once, which should allow me to learn how much maintenance is required before I commit to anything larger. I also need to check that the containers have drainage holes and that any water underneath them won't cause problems for my downstairs neighbor.\n\nWatering is what I'm least sure about. I sometimes travel for work and can't assume a neighbor will always be around to help. Before buying anything, I will consider what would happen if I were away for 4 days. A simple self-watering container might help, but I haven't compared prices or checked whether it would suit the plants I want.\n\nMy budget for the first stage is $60 and has to cover the containers, the potting mix and the plants themselves. I already own a small watering can and don't expect to buy another. If the total comes out higher than I expected, I'll cut back on the number of plants instead of raising the budget, because I want this to stay a manageable experiment and not turn into an expensive project.\n\nI hope to begin on 18 April, as long as the weather is suitable and I have finished the necessary checks. After the first month I'll look at which plants are doing well and whether I'm enjoying the routine, and if it goes well I may add another herb later. For now, my goal is simply to learn and to grow a small amount of food without taking on more than I can comfortably keep up.",
+      "sha256": "7e3a7c8bab622473718c4713dec8dce8cc3b3917132eeec2dea76873d11038fc",
+      "desklib": 0.9996984004974365,
+      "desklib_measurement": {
+        "status": "assessed",
+        "provider": "txtzi detector",
+        "provider_id": "local",
+        "ai_score": 0.9996984004974365,
+        "score_label": "AI-likelihood score",
+        "score_kind": "window_weighted_model_estimate",
+        "model": "desklib/ai-text-detector-v1.01",
+        "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+        "precision": "bfloat16 matrix storage; float32 compute",
+        "sections": [
+          {
+            "section": 1,
+            "ai_score": 0.9996984004974365,
+            "weight": 429
+          }
+        ],
+        "tokens_assessed": 429,
+        "coverage": "full_document",
+        "confidence": "Not calibrated",
+        "language": "English",
+        "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+      },
+      "vanguard": 0.9938097596168518,
+      "vanguard_measurement": {
+        "ai_score": 0.9938097596168518,
+        "model": "ShantanuT01/vanguard-ai-text-detector",
+        "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+        "tokens_assessed": 435,
+        "coverage": "full_document"
+      }
+    },
+    {
+      "id": 5,
+      "name": "Conditional start date",
+      "writer": "OpenAI",
+      "from_baseline": false,
+      "eligible": false,
+      "audit_notes": [
+        "Readable final prose preserves all claims except the precise watering-can expectation: purchase is changed to need. The start-date conditions and hypothetical absence remain intact.",
+        "The source makes a prediction about purchasing another can. The rewrite instead predicts needing another can. These are distinct propositions; owning one does not establish the latter expectation. This exact distinction was also corrected in the prior live baseline review."
+      ],
+      "seconds": 45.34,
+      "text": "My balcony garden plan\n\nI hope to start on 18 April, as long as the weather is suitable and I’ve finished the necessary checks. I’m planning to grow herbs on the balcony this spring so I have fresh ingredients when I cook. For now, I just want to learn and grow a small amount of food without taking on more than I can comfortably maintain.\n\nWatering is my biggest uncertainty. I sometimes travel for work, and I can’t count on a neighbor always being available to help. Before I buy anything, I’ll think through what would happen if I were away for 4 days. A simple self-watering container might help, but I have not compared prices or checked whether it would be suitable for the plants I want.\n\nI know the balcony gets direct sunlight in the morning and is shaded by the neighboring building in the afternoon, but I haven’t measured exactly how much sun it gets. I need to do that before choosing all the plants. Basil, mint, and parsley are my first choices, though I may change the list as I learn more about what they need.\n\nSpace is limited, and I don’t want the pots to get in the way of opening the balcony door. I intend to start with 3 containers rather than fill the whole area, so I can find out how much maintenance is involved before committing to more. I also need to check that the containers have drainage holes and that water underneath them won’t cause problems for the downstairs neighbor.\n\nMy budget for this first stage is $60, including containers, potting mix, and plants. I already have a small watering can and don’t expect to need another. If the total comes to more than I expect, I’ll buy fewer plants rather than raise the budget. I want this to stay a manageable experiment, not an expensive one.\n\nAfter the first month, I’ll review which plants are doing well and whether I enjoy the routine. If the experiment goes well, I may add another herb later.",
+      "sha256": "035479b3400ffd086520ae9947d3138b8c86b894307329d96ba8cac533bdd3ef",
+      "desklib": 0.9023233652114868,
+      "desklib_measurement": {
+        "status": "assessed",
+        "provider": "txtzi detector",
+        "provider_id": "local",
+        "ai_score": 0.9023233652114868,
+        "score_label": "AI-likelihood score",
+        "score_kind": "window_weighted_model_estimate",
+        "model": "desklib/ai-text-detector-v1.01",
+        "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+        "precision": "bfloat16 matrix storage; float32 compute",
+        "sections": [
+          {
+            "section": 1,
+            "ai_score": 0.9023233652114868,
+            "weight": 404
+          }
+        ],
+        "tokens_assessed": 404,
+        "coverage": "full_document",
+        "confidence": "Not calibrated",
+        "language": "English",
+        "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+      },
+      "vanguard": 0.312831848859787,
+      "vanguard_measurement": {
+        "ai_score": 0.312831848859787,
+        "model": "ShantanuT01/vanguard-ai-text-detector",
+        "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+        "tokens_assessed": 422,
+        "coverage": "full_document"
+      }
+    },
+    {
+      "id": 6,
+      "name": "Maintenance before expansion",
+      "writer": "Claude",
+      "from_baseline": true,
+      "eligible": true,
+      "audit_notes": [
+        "All 32 source claims retained. No material additions or output quality defects found. Source paragraphs are reordered; this does not change their relationships."
+      ],
+      "seconds": 47.43,
+      "text": "My balcony garden plan\n\nI'm planning to grow herbs on my balcony this spring because I would like to have fresh ingredients available when I cook. The balcony gets direct sunlight in the morning, but the neighboring building shades it in the afternoon. I haven't measured the exact amount of sunlight yet, and I need to do that before choosing all the plants. Basil, mint, and parsley are my first choices, though that list may change once I learn more about what they need.\n\nSpace is limited, and I don't want pots getting in the way of opening the balcony door. So I intend to start with 3 containers rather than fill the whole area right away, which should show me how much maintenance is involved before I commit to anything larger. I also need to check that the containers have drainage holes and that water underneath them won't cause problems for my downstairs neighbor.\n\nWatering is the part I'm most unsure about. I sometimes travel for work, and I can't assume a neighbor will always be available to help. Before buying anything, I'll think through what would happen if I were away for 4 days. A simple self-watering container might help, but I haven't compared prices or checked whether one would suit the plants I want.\n\nThe budget for this first stage is $60, and it has to cover the containers, potting mix, and plants. I already have a small watering can and don't expect to buy another. If the total comes out higher than I expect, I'll buy fewer plants rather than raise the budget. I want this to stay a manageable experiment, not an expensive project. For now, my goal is to learn and grow a small amount of food without taking on more than I can comfortably maintain.\n\nI hope to begin on 18 April, as long as the weather is suitable and I've finished the necessary checks. After the first month, I'll review which plants are doing well and whether I enjoy the routine. If the experiment is successful, I may add another herb later.",
+      "sha256": "c24cb0cdd9a5a3bc494e9b1e7d3b4040ed1de7b42a82e9c8e6bf36ba9a22203e",
+      "desklib": 0.9997724890708923,
+      "desklib_measurement": {
+        "status": "assessed",
+        "provider": "txtzi detector",
+        "provider_id": "local",
+        "ai_score": 0.9997724890708923,
+        "score_label": "AI-likelihood score",
+        "score_kind": "window_weighted_model_estimate",
+        "model": "desklib/ai-text-detector-v1.01",
+        "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+        "precision": "bfloat16 matrix storage; float32 compute",
+        "sections": [
+          {
+            "section": 1,
+            "ai_score": 0.9997724890708923,
+            "weight": 415
+          }
+        ],
+        "tokens_assessed": 415,
+        "coverage": "full_document",
+        "confidence": "Not calibrated",
+        "language": "English",
+        "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+      },
+      "vanguard": 0.9999997615814209,
+      "vanguard_measurement": {
+        "ai_score": 0.9999997615814209,
+        "model": "ShantanuT01/vanguard-ai-text-detector",
+        "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+        "tokens_assessed": 419,
+        "coverage": "full_document"
+      }
+    },
+    {
+      "id": 7,
+      "name": "Pair decisions with limits",
+      "writer": "OpenAI",
+      "from_baseline": true,
+      "eligible": false,
+      "audit_notes": [
+        "31 claims pass; G17 shifts an expected purchase into an expected need. Otherwise no substantive additions, unresolved referents, or obvious punctuation/readability defects found.",
+        "Predicting no need changes what is expected; the source states an expectation about purchasing another can."
+      ],
+      "seconds": 85.03,
+      "text": "My balcony garden plan\n\nThis spring, I plan to grow herbs on my balcony so I have fresh ingredients to use when cooking. I’d like to start with basil, mint, and parsley, but I haven’t yet measured how much sunlight the balcony gets. There’s direct sun in the morning, while the neighboring building shades it in the afternoon. I need to measure the sunlight before settling on all the plants, and my choices may change as I learn more about their needs.\n\nI intend to begin with 3 containers, rather than filling the entire area immediately. This should allow me to learn how much maintenance is required before making a larger commitment. Space is limited, and I do not want the pots to make it difficult to open the balcony door. I still need to check that the containers have drainage holes and that water underneath them won’t create problems for the downstairs neighbor.\n\nI have a budget of $60 for this first stage, covering the containers, potting mix, and plants. I already own a small watering can, so I don’t expect to need another. If the total costs more than I expect, I’ll cut back on the number of plants rather than raise the budget. I want to keep this a manageable experiment rather than an expensive project.\n\nWatering is the part I am most uncertain about. I sometimes travel for work, and I cannot assume that a neighbor will always be available to help. Before I buy anything, I’ll consider what would happen if I were away for 4 days. A simple self-watering container might be useful, though I haven’t compared prices or checked whether it would suit the plants I want.\n\nI hope to start on 18 April, provided the weather is suitable and I have finished the necessary checks. For now, my goal is simply to learn and grow a small amount of food without taking on more than I can comfortably maintain. After the first month, I’ll look at which plants are doing well and whether I enjoy the routine. If the experiment succeeds, I may add another herb later.",
+      "sha256": "2fd771286557ae537379a63ae4512eb2943382047c568502ffcf8f4806a09aa4",
+      "desklib": 0.9990617632865906,
+      "desklib_measurement": {
+        "status": "assessed",
+        "provider": "txtzi detector",
+        "provider_id": "local",
+        "ai_score": 0.9990617632865906,
+        "score_label": "AI-likelihood score",
+        "score_kind": "window_weighted_model_estimate",
+        "model": "desklib/ai-text-detector-v1.01",
+        "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+        "precision": "bfloat16 matrix storage; float32 compute",
+        "sections": [
+          {
+            "section": 1,
+            "ai_score": 0.9990617632865906,
+            "weight": 416
+          }
+        ],
+        "tokens_assessed": 416,
+        "coverage": "full_document",
+        "confidence": "Not calibrated",
+        "language": "English",
+        "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+      },
+      "vanguard": 0.12473104894161224,
+      "vanguard_measurement": {
+        "ai_score": 0.12473104894161224,
+        "model": "ShantanuT01/vanguard-ai-text-detector",
+        "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+        "tokens_assessed": 432,
+        "coverage": "full_document"
+      }
+    },
+    {
+      "id": 8,
+      "name": "Continuous personal note",
+      "writer": "Claude",
+      "from_baseline": true,
+      "eligible": true,
+      "audit_notes": [
+        "All 32 source claims retained. No material additions, unresolved referents, or obvious punctuation/readability defects found."
+      ],
+      "seconds": 59.34,
+      "text": "My balcony garden plan\n\nI'm planning to grow herbs on my balcony this spring so I can have fresh ingredients on hand when I'm cooking. The balcony gets direct sunlight in the morning, but the neighboring building shades it in the afternoon, and I haven't measured exactly how much light it gets. I need to do that before choosing all the plants. Basil, mint, and parsley are my first choices, though the list may change once I learn more about what they need. Space is limited too, and I don't want pots getting in the way of opening the balcony door, so I intend to start with 3 containers rather than fill the whole area right away. That should let me see how much maintenance is involved before I commit to anything larger. I also need to check that the containers have drainage holes and that water underneath them won't cause problems for my downstairs neighbor.\n\nThe budget for this first stage is $60, and it has to cover the containers, the potting mix, and the plants. I already have a small watering can and don't expect to buy another. If the total comes out higher than I expect, I'll buy fewer plants rather than raise the budget, because I want this to stay a manageable experiment and not turn into an expensive project. Watering is the part I'm least sure about. I sometimes travel for work, and I can't assume a neighbor will always be available to help. Before buying anything, I'll think through what would happen if I were away for 4 days. A simple self-watering container might help, but I haven't compared prices or checked whether one would suit the plants I want.\n\nI hope to begin on 18 April, as long as the weather is suitable and I've finished the necessary checks. After the first month, I'll review which plants are doing well and whether I enjoy the routine. If it works out, I may add another herb later. For now, my goal is to learn and to grow a small amount of food without taking on more than I can comfortably maintain.",
+      "sha256": "a65422aa8faa8616eb93917fe383716cf36bd39e8a73533628d3d92c51cfa593",
+      "desklib": 0.9997573494911194,
+      "desklib_measurement": {
+        "status": "assessed",
+        "provider": "txtzi detector",
+        "provider_id": "local",
+        "ai_score": 0.9997573494911194,
+        "score_label": "AI-likelihood score",
+        "score_kind": "window_weighted_model_estimate",
+        "model": "desklib/ai-text-detector-v1.01",
+        "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+        "precision": "bfloat16 matrix storage; float32 compute",
+        "sections": [
+          {
+            "section": 1,
+            "ai_score": 0.9997573494911194,
+            "weight": 423
+          }
+        ],
+        "tokens_assessed": 423,
+        "coverage": "full_document",
+        "confidence": "Not calibrated",
+        "language": "English",
+        "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+      },
+      "vanguard": 0.9999872446060181,
+      "vanguard_measurement": {
+        "ai_score": 0.9999872446060181,
+        "model": "ShantanuT01/vanguard-ai-text-detector",
+        "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+        "tokens_assessed": 422,
+        "coverage": "full_document"
+      }
+    },
+    {
+      "id": 9,
+      "name": "Conversational explanation",
+      "writer": "OpenAI",
+      "from_baseline": true,
+      "eligible": false,
+      "audit_notes": [
+        "31 claims pass; G17 shifts an expected purchase into an expected need. Otherwise no substantive additions, unresolved referents, or obvious punctuation/readability defects found.",
+        "Predicting no need changes what is expected; the source states an expectation about purchasing another can."
+      ],
+      "seconds": 57.7,
+      "text": "My balcony garden plan\n\nI’m planning to grow herbs on my balcony this spring so I have fresh ingredients available when I cook. It gets direct sunlight in the morning, but the neighboring building shades it in the afternoon. I haven’t measured exactly how much sunlight it gets yet, and I need to do that before choosing all the plants. I’m leaning toward basil, mint, and parsley, though I may change that list after learning more about what they need.\n\nI plan to start with 3 containers instead of filling the balcony right away, so I can find out how much care they need before adding more. There isn’t much space, and I don’t want the pots to get in the way of opening the balcony door. I still need to check that the containers have drainage holes and that water underneath them won’t cause problems for the downstairs neighbor.\n\nWatering is the part I’m least sure about. I sometimes travel for work, so I can’t assume a neighbor will always be available to help. Before I buy anything, I’ll think through what would happen if I were away for 4 days. A simple self-watering container might help, but I haven’t compared prices or checked whether it would suit the plants I want.\n\nI have a budget of $60 for this first stage, including containers, potting mix, and plants. I already own a small watering can and don’t expect to need another. If the total costs more than I expect, I’ll buy fewer plants rather than raise the budget. I want a manageable experiment, not an expensive project.\n\nI hope to start on 18 April, if the weather is suitable and I’ve finished the checks I need to make. After the first month, I’ll look at which plants are doing well and whether I’m enjoying the routine. If it works out, I may add another herb later. For now, my goal is to learn and grow a small amount of food without taking on more than I can comfortably care for.",
+      "sha256": "d54efbbf85d24e040f8d4543b28bdcb25d4ef386c22907b740480ee6f8ec65af",
+      "desklib": 0.6547662615776062,
+      "desklib_measurement": {
+        "status": "assessed",
+        "provider": "txtzi detector",
+        "provider_id": "local",
+        "ai_score": 0.6547662615776062,
+        "score_label": "AI-likelihood score",
+        "score_kind": "window_weighted_model_estimate",
+        "model": "desklib/ai-text-detector-v1.01",
+        "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+        "precision": "bfloat16 matrix storage; float32 compute",
+        "sections": [
+          {
+            "section": 1,
+            "ai_score": 0.6547662615776062,
+            "weight": 412
+          }
+        ],
+        "tokens_assessed": 412,
+        "coverage": "full_document",
+        "confidence": "Not calibrated",
+        "language": "English",
+        "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+      },
+      "vanguard": 0.4925593137741089,
+      "vanguard_measurement": {
+        "ai_score": 0.4925593137741089,
+        "model": "ShantanuT01/vanguard-ai-text-detector",
+        "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+        "tokens_assessed": 428,
+        "coverage": "full_document"
+      }
+    },
+    {
+      "id": 10,
+      "name": "Unfinished working thought",
+      "writer": "Claude",
+      "from_baseline": true,
+      "eligible": true,
+      "audit_notes": [
+        "All 32 source claims retained. No material additions, unresolved referents, or obvious punctuation/readability defects found."
+      ],
+      "seconds": 59.01,
+      "text": "My balcony garden plan\n\nI plan to grow herbs on my balcony this spring so that I have fresh ingredients when I cook. The balcony gets direct sunlight in the morning, but the neighboring building shades it in the afternoon. I haven't measured the exact amount of sunlight, and I need to do that before choosing all the plants. Basil, mint, and parsley are my first preferences, though I may revise that list once I know more about what they need.\n\nSpace is limited, and I don't want pots placed where they would make the balcony door difficult to open. I intend to begin with 3 containers rather than fill the whole space at once, which should let me see how much maintenance is involved before I commit to anything larger. I also need to verify that the containers have drainage holes and that any water underneath them won't cause problems for my downstairs neighbor.\n\nMy budget for this first stage is $60, and it has to cover the containers, the potting mix, and the plants. I already own a small watering can, so I don't expect to buy another. If the total goes beyond what I expect, I'll buy fewer plants instead of raising the budget. I want a manageable experiment rather than an expensive project.\n\nWatering is what I'm most uncertain about. I sometimes travel for work, and I can't assume a neighbor will always be available to help. Before buying anything, I'll consider what would happen if I were away for 4 days. A simple self-watering container might help, but I haven't compared prices or checked whether it would suit the plants I prefer.\n\nI hope to begin on 18 April, provided the weather is suitable and I've completed the necessary checks. After the first month, I'll assess which plants are doing well and whether I enjoy the routine. If the experiment succeeds, I may add another herb later. For now my goal is to learn and to grow a small amount of food without exceeding what I can comfortably maintain.",
+      "sha256": "f993c80d35904859648831633014454b0dbca1fc30a301283fc45354155d8a73",
+      "desklib": 0.999639630317688,
+      "desklib_measurement": {
+        "status": "assessed",
+        "provider": "txtzi detector",
+        "provider_id": "local",
+        "ai_score": 0.999639630317688,
+        "score_label": "AI-likelihood score",
+        "score_kind": "window_weighted_model_estimate",
+        "model": "desklib/ai-text-detector-v1.01",
+        "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+        "precision": "bfloat16 matrix storage; float32 compute",
+        "sections": [
+          {
+            "section": 1,
+            "ai_score": 0.999639630317688,
+            "weight": 406
+          }
+        ],
+        "tokens_assessed": 406,
+        "coverage": "full_document",
+        "confidence": "Not calibrated",
+        "language": "English",
+        "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+      },
+      "vanguard": 0.9997608065605164,
+      "vanguard_measurement": {
+        "ai_score": 0.9997608065605164,
+        "model": "ShantanuT01/vanguard-ai-text-detector",
+        "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+        "tokens_assessed": 411,
+        "coverage": "full_document"
+      }
+    }
+  ],
+  "repairs": [
+    {
+      "id": "05-repaired",
+      "name": "Trial 5 · source-fidelity correction",
+      "writer": "OpenAI",
+      "from_baseline": false,
+      "parent_trial": 5,
+      "eligible": true,
+      "audit_notes": [
+        "Changed only the anticipated need for another watering can back to the source-stated expectation about purchasing one. All other text is byte-for-byte unchanged. The complete parent output was independently checked against all 32 source claims; G17 was its only identified fidelity issue. The corrected output passes G17 and has no unresolved semantic or obvious readability issue. No detector scores were consulted during this review.",
+        "“so I can find out … before committing to more” expresses the intended opportunity to learn; it does not claim guaranteed learning. “start with 3 containers rather than fill the whole area” preserves the initial-stage contrast. No edits were needed for these phrases."
+      ],
+      "repairs": [
+        {
+          "find": "don’t expect to need another",
+          "replace": "don’t expect to buy another",
+          "reason": "G17: preserve expected purchase, not a prediction about need."
+        }
+      ],
+      "seconds": 45.34,
+      "text": "My balcony garden plan\n\nI hope to start on 18 April, as long as the weather is suitable and I’ve finished the necessary checks. I’m planning to grow herbs on the balcony this spring so I have fresh ingredients when I cook. For now, I just want to learn and grow a small amount of food without taking on more than I can comfortably maintain.\n\nWatering is my biggest uncertainty. I sometimes travel for work, and I can’t count on a neighbor always being available to help. Before I buy anything, I’ll think through what would happen if I were away for 4 days. A simple self-watering container might help, but I have not compared prices or checked whether it would be suitable for the plants I want.\n\nI know the balcony gets direct sunlight in the morning and is shaded by the neighboring building in the afternoon, but I haven’t measured exactly how much sun it gets. I need to do that before choosing all the plants. Basil, mint, and parsley are my first choices, though I may change the list as I learn more about what they need.\n\nSpace is limited, and I don’t want the pots to get in the way of opening the balcony door. I intend to start with 3 containers rather than fill the whole area, so I can find out how much maintenance is involved before committing to more. I also need to check that the containers have drainage holes and that water underneath them won’t cause problems for the downstairs neighbor.\n\nMy budget for this first stage is $60, including containers, potting mix, and plants. I already have a small watering can and don’t expect to buy another. If the total comes to more than I expect, I’ll buy fewer plants rather than raise the budget. I want this to stay a manageable experiment, not an expensive one.\n\nAfter the first month, I’ll review which plants are doing well and whether I enjoy the routine. If the experiment goes well, I may add another herb later.",
+      "sha256": "3279a9689391739357c1e60c79fd733506c49229f3de68f0d95332e5a286d72d",
+      "desklib": 0.8880502581596375,
+      "desklib_measurement": {
+        "status": "assessed",
+        "provider": "txtzi detector",
+        "provider_id": "local",
+        "ai_score": 0.8880502581596375,
+        "score_label": "AI-likelihood score",
+        "score_kind": "window_weighted_model_estimate",
+        "model": "desklib/ai-text-detector-v1.01",
+        "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+        "precision": "bfloat16 matrix storage; float32 compute",
+        "sections": [
+          {
+            "section": 1,
+            "ai_score": 0.8880502581596375,
+            "weight": 404
+          }
+        ],
+        "tokens_assessed": 404,
+        "coverage": "full_document",
+        "confidence": "Not calibrated",
+        "language": "English",
+        "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+      },
+      "vanguard": 0.2917633652687073,
+      "vanguard_measurement": {
+        "ai_score": 0.2917633652687073,
+        "model": "ShantanuT01/vanguard-ai-text-detector",
+        "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+        "tokens_assessed": 422,
+        "coverage": "full_document"
+      }
+    },
+    {
+      "id": "07-repaired",
+      "name": "Trial 7 · source-fidelity correction",
+      "writer": "OpenAI",
+      "from_baseline": true,
+      "parent_trial": 7,
+      "eligible": true,
+      "audit_notes": [
+        "Changed only the anticipated need for another watering can back to the source-stated expectation about purchasing one. All other text is byte-for-byte unchanged. The complete parent output was independently checked against all 32 source claims; G17 was its only identified fidelity issue. The corrected output passes G17 and has no unresolved semantic or obvious readability issue. No detector scores were consulted during this review."
+      ],
+      "repairs": [
+        {
+          "find": "don’t expect to need another",
+          "replace": "don’t expect to buy another",
+          "reason": "G17: preserve expected purchase, not a prediction about need."
+        }
+      ],
+      "seconds": 85.03,
+      "text": "My balcony garden plan\n\nThis spring, I plan to grow herbs on my balcony so I have fresh ingredients to use when cooking. I’d like to start with basil, mint, and parsley, but I haven’t yet measured how much sunlight the balcony gets. There’s direct sun in the morning, while the neighboring building shades it in the afternoon. I need to measure the sunlight before settling on all the plants, and my choices may change as I learn more about their needs.\n\nI intend to begin with 3 containers, rather than filling the entire area immediately. This should allow me to learn how much maintenance is required before making a larger commitment. Space is limited, and I do not want the pots to make it difficult to open the balcony door. I still need to check that the containers have drainage holes and that water underneath them won’t create problems for the downstairs neighbor.\n\nI have a budget of $60 for this first stage, covering the containers, potting mix, and plants. I already own a small watering can, so I don’t expect to buy another. If the total costs more than I expect, I’ll cut back on the number of plants rather than raise the budget. I want to keep this a manageable experiment rather than an expensive project.\n\nWatering is the part I am most uncertain about. I sometimes travel for work, and I cannot assume that a neighbor will always be available to help. Before I buy anything, I’ll consider what would happen if I were away for 4 days. A simple self-watering container might be useful, though I haven’t compared prices or checked whether it would suit the plants I want.\n\nI hope to start on 18 April, provided the weather is suitable and I have finished the necessary checks. For now, my goal is simply to learn and grow a small amount of food without taking on more than I can comfortably maintain. After the first month, I’ll look at which plants are doing well and whether I enjoy the routine. If the experiment succeeds, I may add another herb later.",
+      "sha256": "8db28be31d5203f0bf95c2453f8440be35ebda300d9c9acba6753ff21ee4eacc",
+      "desklib": 0.9988569021224976,
+      "desklib_measurement": {
+        "status": "assessed",
+        "provider": "txtzi detector",
+        "provider_id": "local",
+        "ai_score": 0.9988569021224976,
+        "score_label": "AI-likelihood score",
+        "score_kind": "window_weighted_model_estimate",
+        "model": "desklib/ai-text-detector-v1.01",
+        "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+        "precision": "bfloat16 matrix storage; float32 compute",
+        "sections": [
+          {
+            "section": 1,
+            "ai_score": 0.9988569021224976,
+            "weight": 416
+          }
+        ],
+        "tokens_assessed": 416,
+        "coverage": "full_document",
+        "confidence": "Not calibrated",
+        "language": "English",
+        "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+      },
+      "vanguard": 0.12308741360902786,
+      "vanguard_measurement": {
+        "ai_score": 0.12308741360902786,
+        "model": "ShantanuT01/vanguard-ai-text-detector",
+        "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+        "tokens_assessed": 432,
+        "coverage": "full_document"
+      }
+    },
+    {
+      "id": "09-repaired",
+      "name": "Trial 9 · source-fidelity correction",
+      "writer": "OpenAI",
+      "from_baseline": true,
+      "parent_trial": 9,
+      "eligible": true,
+      "audit_notes": [
+        "Changed only the anticipated need for another watering can back to the source-stated expectation about purchasing one. All other text is byte-for-byte unchanged. The complete parent output was independently checked against all 32 source claims; G17 was its only identified fidelity issue. The corrected output passes G17 and has no unresolved semantic or obvious readability issue. No detector scores were consulted during this review."
+      ],
+      "repairs": [
+        {
+          "find": "don’t expect to need another",
+          "replace": "don’t expect to buy another",
+          "reason": "G17: preserve expected purchase, not a prediction about need."
+        }
+      ],
+      "seconds": 57.7,
+      "text": "My balcony garden plan\n\nI’m planning to grow herbs on my balcony this spring so I have fresh ingredients available when I cook. It gets direct sunlight in the morning, but the neighboring building shades it in the afternoon. I haven’t measured exactly how much sunlight it gets yet, and I need to do that before choosing all the plants. I’m leaning toward basil, mint, and parsley, though I may change that list after learning more about what they need.\n\nI plan to start with 3 containers instead of filling the balcony right away, so I can find out how much care they need before adding more. There isn’t much space, and I don’t want the pots to get in the way of opening the balcony door. I still need to check that the containers have drainage holes and that water underneath them won’t cause problems for the downstairs neighbor.\n\nWatering is the part I’m least sure about. I sometimes travel for work, so I can’t assume a neighbor will always be available to help. Before I buy anything, I’ll think through what would happen if I were away for 4 days. A simple self-watering container might help, but I haven’t compared prices or checked whether it would suit the plants I want.\n\nI have a budget of $60 for this first stage, including containers, potting mix, and plants. I already own a small watering can and don’t expect to buy another. If the total costs more than I expect, I’ll buy fewer plants rather than raise the budget. I want a manageable experiment, not an expensive project.\n\nI hope to start on 18 April, if the weather is suitable and I’ve finished the checks I need to make. After the first month, I’ll look at which plants are doing well and whether I’m enjoying the routine. If it works out, I may add another herb later. For now, my goal is to learn and grow a small amount of food without taking on more than I can comfortably care for.",
+      "sha256": "fce1ae6a50dc24b01384f6ad10c7ec47fdf96c7c9d5263cfc264e300d2fab2a2",
+      "desklib": 0.6161035299301147,
+      "desklib_measurement": {
+        "status": "assessed",
+        "provider": "txtzi detector",
+        "provider_id": "local",
+        "ai_score": 0.6161035299301147,
+        "score_label": "AI-likelihood score",
+        "score_kind": "window_weighted_model_estimate",
+        "model": "desklib/ai-text-detector-v1.01",
+        "version": "5fdea974cd4287c61674951ec78803aa274e2fb7",
+        "precision": "bfloat16 matrix storage; float32 compute",
+        "sections": [
+          {
+            "section": 1,
+            "ai_score": 0.6161035299301147,
+            "weight": 412
+          }
+        ],
+        "tokens_assessed": 412,
+        "coverage": "full_document",
+        "confidence": "Not calibrated",
+        "language": "English",
+        "notice": "Self-hosted Desklib model. Token-weighted mean across overlapping sections; not a percentage of AI-written words or a validated probability of authorship. Results can differ from other checkers. English beta."
+      },
+      "vanguard": 0.46178722381591797,
+      "vanguard_measurement": {
+        "ai_score": 0.46178722381591797,
+        "model": "ShantanuT01/vanguard-ai-text-detector",
+        "revision": "823061be63b90f2b42f64ac1e1f82772e872533b",
+        "tokens_assessed": 428,
+        "coverage": "full_document"
+      }
+    }
+  ],
+  "estimated_api_cost_usd": 0.4708,
+  "cost_note": "Estimated list-rate cost of the 30 completed writing/review calls using returned token usage; not an invoice. Hosting and the failed HTTP520 request are excluded. No additional infrastructure or subscription was purchased.",
+  "request_failure": {
+    "trial": 8,
+    "status": 520,
+    "recovered": true,
+    "counted_as_a_generated_trial": false
+  },
+  "production_workflow_changed": false
+}
