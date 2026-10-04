@@ -42,4 +42,40 @@ Both are approximately 99.99%. The difference is too small to present as a usefu
 
 The second test took 125.253 seconds in the shared research workspace (not a Render performance measurement) and used an estimated $0.054144 in provider tokens. Total new live workflow validation spend across both tests was $0.084356, excluding the independent research series and infrastructure.
 
+| Provider | Input tokens | Output tokens | Estimated USD |
+| --- | ---: | ---: | ---: |
+| Claude | 1,857 | 1,747 | 0.021184 |
+| OpenAI | 2,269 | 1,637 | 0.020908 |
+| Grok | 3,698 | 776 | 0.012052 |
+
+A separate reviewer inspected the exact original/output pair without seeing detector scores and approved all 32 substantive source points. This is additional source-fidelity evidence, not detector-performance evidence.
+
 This production workflow selects against **one** local detector. Earlier research selected across **two** detectors with many more variants on one garden-plan source. Its scores cannot be assigned to this workflow, to different text, or to ordinary customer documents. Neither the historical experiment nor one successful live workflow test establishes a general success rate or an under-10 guarantee.
+
+## Why the bounded experiment missed the research gains
+
+The research and live workflow started from different text. The recovered research parent was already a complete rewording of the original, including a different paragraph sequence. It was independently measured at 79.34 / 55.98 before this research phase began. Its best reviewed descendant followed this exact chain:
+
+| Parent | Applied patches at that step | Desklib | Vanguard |
+| --- | ---: | ---: | ---: |
+| `recovery-baseline` | 0 | 79.34 | 55.98 |
+| `r02-c121` | 4 | 61.97 | 26.49 |
+| `r05-c042` | 3 | 36.11 | 15.25 |
+| `r06-c150` | 3 | 23.18 | 14.44 |
+
+Each descendant inherited previous accepted changes; the broader research series searched 1,000 distinct texts and selected using both detectors. Its initial parent also inherited work from earlier development and is not an automatically generated fresh-input baseline.
+
+The live workflow started directly from the 99.9959 original. OpenAI retained seven minor wording proposals from Claude's eight. The selected candidate applied four patches whose find-spans covered 397 of the source's 2,096 characters; it preserved the original paragraph sequence and most wording. Examples of the proposal types were replacing “allow me to learn” with “let me learn” and shortening repeated nouns. That is a materially different search space from the research chain. This comparison does not isolate whether the research gains came from its initial rewriting, repeated selection, paragraph order, detector overfitting or a combination.
+
+## One prospective change recommended for evaluation
+
+**Test a fresh, source-reviewed full-draft starting point before the existing small patch search.** This changes initialization rather than adding hundreds of evaluations:
+
+- Claude creates one fresh draft and source-linked inventory from the complete original, preserving the original language, genre, point of view and all qualifications. No prewritten garden text, chosen phrases or historical winner is supplied.
+- OpenAI compares that draft with the entire original, explicitly approves or rejects it, and proposes a small patch bank against the approved draft. A rejected starting draft cannot enter the search.
+- The existing exact-text measurement, protected-value guards and final Grok comparison remain. Retain the original unless the chosen exact text clears meaning checks and improves its measured score.
+- Keep the current four-provider-call and fourteen-assessment ceilings: original, one new starting draft, at most eleven patch variants and an optional repaired version (reduce variants by one when a separate cleanup baseline also needs scoring). Keep the same cost reservation and admission deadline. No new model, infrastructure or production flag is needed for a research-only test.
+
+This is a proposal, not an implemented or validated improvement. It directly tests the initialization difference observed above; it may still fail because a single automatic draft cannot reproduce a manually developed, adaptively selected research parent. Do not enable it or advertise a score target based on the garden example.
+
+Before any general-performance claim, freeze this workflow and evaluate it from original input on genuinely new documents from multiple genres, lengths and authors. Include independently sourced human-written controls, avoid choosing only favorable outputs, review source fidelity without detector scores, and keep at least one detector out of the selection loop. Report the complete success/fallback/error rates, meaning changes, provider cost and measured Render latency. The current work provides none of that source-independent effectiveness evidence.

@@ -96,3 +96,18 @@ def test_canonical_origin_rejects_credentials_or_non_origin_settings():
                 pass
             else:
                 raise AssertionError(value)
+
+
+def test_recovery_summary_keeps_research_separate_from_automatic_jobs():
+    html = public_pages.render('/evidence')
+    assert '23.18 / 100 with Desklib' in html and '14.44 / 100 with Vanguard' in html
+    assert '2026-10-04T14:05:21Z' in html
+    assert 'not 1,000 independent three-provider rewrites' in html
+    assert '21 completed provider requests, plus one failed attempt' in html
+    assert 'not what an ordinary app job runs' in html
+    assert 'neither was held out' in html
+    assert 'retained privately' in html
+    assert '/blob/5a46f806a9897fc04feef8305a0ae1d0342fc5c5/docs/recovery-research-results-2026-10-04.md' in html
+    assert '/tree/5a46f806a9897fc04feef8305a0ae1d0342fc5c5/scripts/research' in html
+    assert '20.67' not in html and '12.17' not in html
+    assert 'separate from the automatic app workflow' in public_pages.render('/')

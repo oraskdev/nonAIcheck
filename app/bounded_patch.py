@@ -151,7 +151,7 @@ def apply_patches(source, patches, *, repair=False):
     return result
 
 
-def validate_bank(bank, source):
+def validate_bank(bank, source, *, patch_source=None):
     try:
         atoms, patches = bank["atoms"], bank["patches"]
         if not isinstance(atoms, list) or any(not isinstance(a, dict) for a in atoms):
@@ -176,7 +176,7 @@ def validate_bank(bank, source):
             if not isinstance(patch_id, str) or not patch_id or patch_id in seen:
                 raise ValueError("Patch identity")
             seen.add(patch_id)
-            apply_patches(source, [patch])
+            apply_patches(source if patch_source is None else patch_source, [patch])
         return {"atoms": atoms, "patches": patches}
     except (ValueError, TypeError, KeyError, providers.ProviderError) as exc:
         raise providers.ProviderError("The proposed editing bank failed source or structure checks.") from exc
@@ -238,9 +238,35 @@ def source_backed_repair(source, candidate, review):
     return repaired
 
 
+def _prepare_patch_bank(source, options, budget, progress):
+    progress(15, "Claude is mapping the source and proposing precise edits")
+    bank = validate_bank(budget.call("anthropic", TRUST +
+        "Return JSON with atoms and patches. Extract a complete source-linked inventory: atoms contain id, "
+        "statement and source_ids. Then propose up to 12 independent, nonoverlapping exact-span wording "
+        "improvements, each with id, block_id, find and replace. The source is already authoritative. "
+        "Retain the same meaning using natural, direct prose. Changes can reshape a sentence, but do not "
+        "insert generic introductions or conclusions. Leave headings unchanged. Each find must occur "
+        "exactly once in its paragraph, 8–600 characters; replacement at most 900. Preserve the exact "
+        "numeric literals and modal verbs, including may, might, could, can, should, will and would. "
+        "Do not force changes that would lose a detail.", {"source": source, "tone": options.get("tone", "natural")}, BANK_SCHEMA), source)
+    progress(25, "OpenAI is checking the proposed changes against your source")
+    return validate_bank(budget.call("openai", TRUST +
+        "Validate and improve this source-linked inventory and small editing bank. The original source "
+        "overrides the proposals. Return JSON with atoms and patches in the same schema. Every original "
+        "substantive point and relationship must be represented in atoms. Reject or minimally correct "
+        "patches that omit facts, alter causality, strengthen uncertainty or invent anything. Preserve "
+        "worthwhile natural wording. Keep at most 12 exact unique find/replace patches, 8–600/900 chars, "
+        "unchanged headings, literal numbers and modal verbs. Independent patches may not overlap.",
+        {"source": source, "proposed_bank": bank}, BANK_SCHEMA), source)
+
+
 def run(blocks, options, progress, *, budget_usd=DEFAULT_BUDGET_USD, recorder=None):
-    """Run only for an explicit new quote; no existing funded quote changes behavior."""
-    if options.get("writing_workflow") != VERSION or options.get("detector_provider") != "local" or not options.get("detector") or not eligible(blocks):
+    """Explicit experimental selection; customer quotes do not enable either version."""
+    from . import bounded_draft
+    workflow = options.get("writing_workflow")
+    fresh = workflow == bounded_draft.VERSION
+    if (workflow not in (VERSION, bounded_draft.VERSION) or options.get("detector_provider") != "local" or
+        not options.get("detector") or not eligible(blocks) or (fresh and not bounded_draft.eligible(blocks))):
         raise providers.ProviderError("This bounded workflow requires 80–450 words of plain prose and the local detector.")
     recorder = recorder or (lambda *_: None)
     emit_progress, last_progress = progress, 0
@@ -273,28 +299,22 @@ def run(blocks, options, progress, *, budget_usd=DEFAULT_BUDGET_USD, recorder=No
     selected = "original" if source == blocks else "cleaned_original"
     result, candidate, candidate_assessment = source, source, after
     bank = None
+    initialization = {"status": "original_source", "parent_sha256": digest(source)}
     try:
-        progress(15, "Claude is mapping the source and proposing precise edits")
-        bank = validate_bank(budget.call("anthropic", TRUST +
-            "Return JSON with atoms and patches. Extract a complete source-linked inventory: atoms contain id, "
-            "statement and source_ids. Then propose up to 12 independent, nonoverlapping exact-span wording "
-            "improvements, each with id, block_id, find and replace. The source is already authoritative. "
-            "Retain the same meaning using natural, direct prose. Changes can reshape a sentence, but do not "
-            "insert generic introductions or conclusions. Leave headings unchanged. Each find must occur "
-            "exactly once in its paragraph, 8–600 characters; replacement at most 900. Preserve the exact "
-            "numeric literals and modal verbs, including may, might, could, can, should, will and would. "
-            "Do not force changes that would lose a detail.", {"source": source, "tone": options.get("tone", "natural")}, BANK_SCHEMA), source)
-        progress(25, "OpenAI is checking the proposed changes against your source")
-        bank = validate_bank(budget.call("openai", TRUST +
-            "Validate and improve this source-linked inventory and small editing bank. The original source "
-            "overrides the proposals. Return JSON with atoms and patches in the same schema. Every original "
-            "substantive point and relationship must be represented in atoms. Reject or minimally correct "
-            "patches that omit facts, alter causality, strengthen uncertainty or invent anything. Preserve "
-            "worthwhile natural wording. Keep at most 12 exact unique find/replace patches, 8–600/900 chars, "
-            "unchanged headings, literal numbers and modal verbs. Independent patches may not overlap.",
-            {"source": source, "proposed_bank": bank}, BANK_SCHEMA), source)
-        capacity = MAX_VARIANTS - (source != blocks)
-        for index, (variant, patch_ids) in enumerate(variants(source, bank, capacity), 1):
+        if fresh:
+            parent, bank, initialization = bounded_draft.prepare(source, options, budget, progress)
+            recorder("initialization", initialization)
+            if initialization["status"] == "accepted":
+                seed_assessment = measure(parent, "fresh_draft")
+                if _score(seed_assessment) is not None and _score(seed_assessment) < _score(candidate_assessment):
+                    candidate, candidate_assessment = parent, seed_assessment
+            else:
+                flags.append({"block_id": source[0]["id"], "message": "The fresh draft failed source review; the original was retained."})
+        else:
+            parent, bank = source, _prepare_patch_bank(source, options, budget, progress)
+        capacity = MAX_VARIANTS - (source != blocks) - fresh
+        choices = variants(parent, bank, capacity) if not fresh or initialization["status"] == "accepted" else []
+        for index, (variant, patch_ids) in enumerate(choices, 1):
             assessment = measure(variant, f"candidate_{index}")
             attempts[-1]["patch_ids"] = patch_ids
             if _score(assessment) is not None and (_score(candidate_assessment) is None or _score(assessment) < _score(candidate_assessment)):
@@ -342,7 +362,9 @@ def run(blocks, options, progress, *, budget_usd=DEFAULT_BUDGET_USD, recorder=No
             raise providers.ProviderError("The three-engine workflow could not complete. Your payment will be returned.") from exc
         flags.append({"block_id": source[0]["id"], "message": "Kept your source: " + str(exc)})
         recorder("safe_fallback", {"reason": str(exc)})
-    report = {"writing_method": VERSION, "structure_recomposed": False, "flags": flags,
+    structure_changed = result != source and [(b["id"], b["type"]) for b in result] != [(b["id"], b["type"]) for b in source]
+    report = {"writing_method": workflow, "structure_recomposed": structure_changed, "flags": flags,
+        "initialization": initialization,
         "provider_usage": [u for u in budget.usage if u["status"].startswith("completed")],
         "source_reviews": reviews, "revision_reports": [],
         "before_detector": before, "after_detector": after,
