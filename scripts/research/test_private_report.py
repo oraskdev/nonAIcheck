@@ -432,3 +432,26 @@ def test_phase_e_requires_exact_checkpoint_pair_and_two_current_approvals(phase_
     (run/'reviews/gate-second.json').unlink()
     with pytest.raises(ValueError,match='two reviews'):
         phase_e_prerequisites(run,source,claims,jobs)
+
+
+def test_phase_g_integration_keeps_provisional_predictions_out_of_selection(study,monkeypatch):
+    import sys
+    from types import SimpleNamespace
+    source_hash=digest((study/'source.txt').read_text())
+    baseline=json.loads((study/'baseline.json').read_text())
+    jobs=[]
+    for i,(text,values,approved) in enumerate([('Reviewed phase G draft.',(.05,.06),True),('Unaudited phase G draft.',(.001,.001),False)],1):
+        job={'id':f'g01-c{i:04d}','phase':'G','text':text,'sha256':digest(text),'source_sha256':source_hash,'parent_id':baseline['id'],'parent_sha256':baseline['sha256'],'ranking_only_predicted_logits':[-100,-100],'prediction_is_not_a_measurement':True}
+        jobs.append(job)
+        for detector,value in zip(('desklib','vanguard'),values):score(study,job['sha256'],detector,value)
+        if approved:
+            for who in ['g-first','g-second']:write(study/f'reviews/{who}.json',review(job['sha256'],source_hash,who))
+    (study/'phase-g').mkdir()
+    # The isolated helper owns provenance validation; exercise main's independent measurement/review gate.
+    monkeypatch.setitem(sys.modules,'scripts.research.private_report_g',SimpleNamespace(phase_g_data=lambda *args:{'jobs':jobs,'state':'measuring','new_provider_requests':0,'completed_patch_banks':0}))
+    result=build_data(study)
+    assert result['selected']['job']['id']=='g01-c0001'
+    assert result['selected']['scores']=={'desklib':.05,'vanguard':.06}
+    assert result['thresholds']=={'30':True,'10':True,'2':False}
+    assert result['phase_counts'][-1]=={'phase':'G','unique':2,'paired':2,'reviewed':1,'new_provider_requests':0,'verified_thresholds':{'30':True,'10':True,'2':False}}
+    assert 'zero provider requests' in render(result)
