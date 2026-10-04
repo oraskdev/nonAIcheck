@@ -216,11 +216,11 @@ def parent_approvals(parent, source_hash, claims):
     return sorted(reviewers)
 
 
-def valid_patch(parent, patch):
+def valid_patch(parent, patch, max_find=450, max_replace=600):
     find, replace = patch.get("find"), patch.get("replace")
     if not isinstance(find, str) or not isinstance(replace, str):
         return None
-    if not 20 <= len(find) <= 450 or not 15 <= len(replace) <= 600 or find == replace:
+    if not 20 <= len(find) <= max_find or not 15 <= len(replace) <= max_replace or find == replace:
         return None
     if parent.count(find) != 1 or "\n" in find or "\n" in replace or not clean(replace):
         return None

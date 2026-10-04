@@ -76,6 +76,39 @@ The live workflow started directly from the 99.9959 original. OpenAI retained se
 - The existing exact-text measurement, protected-value guards and final Grok comparison remain. Retain the original unless the chosen exact text clears meaning checks and improves its measured score.
 - Keep the current four-provider-call and fourteen-assessment ceilings: original, one new starting draft, at most eleven patch variants and an optional repaired version (reduce variants by one when a separate cleanup baseline also needs scoring). Keep the same cost reservation and admission deadline. No new model, infrastructure or production flag is needed for a research-only test.
 
-This is a proposal, not an implemented or validated improvement. It directly tests the initialization difference observed above; it may still fail because a single automatic draft cannot reproduce a manually developed, adaptively selected research parent. Do not enable it or advertise a score target based on the garden example.
+This initialization change is now implemented only as the experimental version `bounded-draft-v1`; no customer quote or production dispatcher selects it. It directly tests the initialization difference observed above and is not a validated improvement. It may still fail because a single automatic draft cannot reproduce a manually developed, adaptively selected research parent. Do not enable it or advertise a score target based on the garden example.
+
+Before a new source was authored, the implementation, tests and relevant configuration were frozen with strategy hash `6a0345b8282c631aba8440470a9a293fb238120c294cd3fba95584dbc4dc3029`. All 77 Python tests passed. A single prospective holdout attempt is authorized with a maximum $0.40 estimated-or-reserved cost, keeping cumulative live workflow validation below $0.484356. The predeclared gate requires an approved exact source/output pair, a final Desklib score below 0.30, and an absolute reduction of at least 0.10. Vanguard will measure only the original and final output afterward and will not influence selection. No prompts may be retuned after inspecting this input or its result. Even a passing result requires a separate production/resource review and does not automatically enable the feature.
 
 Before any general-performance claim, freeze this workflow and evaluate it from original input on genuinely new documents from multiple genres, lengths and authors. Include independently sourced human-written controls, avoid choosing only favorable outputs, review source fidelity without detector scores, and keep at least one detector out of the selection loop. Report the complete success/fallback/error rates, meaning changes, provider cost and measured Render latency. The current work provides none of that source-independent effectiveness evidence.
+
+## Frozen holdout result — experimental mode remains disabled
+
+One new, 338-word fictional business update was authored after the strategy freeze. It contains no garden-plan material. The frozen workflow ran exactly once, with actual Claude, OpenAI and Grok requests and no retries or prompt changes. It measured the original, one fresh draft and seven distinct patch variants. The original was already below 0.30 on Desklib before editing.
+
+| Desklib measurement | Exact estimate | Display percentage |
+| --- | ---: | ---: |
+| Original | 0.2112809121608734 | 21.1281% |
+| Selected output | 0.1599419116973877 | 15.9942% |
+| Absolute reduction | 0.05133900046348572 | 5.1339 percentage points |
+
+**The prospective gate failed:** the output is below 0.30, but the reduction is less than the predeclared 0.10 minimum. The original's already-low score must not be presented as an achievement of the editing workflow. The output is also above 0.10. Neither workflow is enabled in customer quotes, and this single modest reduction does not establish general effectiveness.
+
+The selected output hash is `1fd37d273375112ecb685bc46390c5bc498a6bf9bb6c61ae1cc88f2ccf64d828`; the source hash is `77d9a99bb810a58c480e2d658120b8c60ff950380eea90544362224053fca156`. Provider source approval was required before selection. A separate reviewer froze a new 48-point inventory from the source before seeing the output, then approved all 48 points and checked every output paragraph for unsupported additions. The reviewer saw neither detector scores nor the providers' verdicts.
+
+The independent detector result was substantially worse. Vanguard measured only the original and final chosen output after selection, with full-document coverage and pinned revision `823061be63b90f2b42f64ac1e1f82772e872533b`:
+
+| Held-out Vanguard measurement | Exact estimate | Display percentage |
+| --- | ---: | ---: |
+| Original | 0.3685223460197449 | 36.8522% |
+| Selected output | 0.9994981288909912 | 99.9498% |
+
+**Improving the selection detector did not transfer to the independent detector on this holdout.** The substantial Vanguard worsening is part of the recorded result, not an omitted outlier. No other candidate was selected afterward, and no prompt was retuned. The source-fidelity approval does not negate this performance failure. Experimental mode remains disabled.
+
+| Provider | Input tokens | Output tokens | Estimated USD |
+| --- | ---: | ---: | ---: |
+| Claude | 1,900 | 1,894 | 0.022740 |
+| OpenAI | 2,540 | 516 | 0.010240 |
+| Grok | 3,656 | 1,227 | 0.014674 |
+
+This attempt used an estimated $0.047654 and took 97.902 seconds in the shared research workspace. Cumulative live workflow validation spend is $0.132010. Raw source text, output, requests and responses are retained privately; this document contains aggregate results only. No further paid attempt or tuning was performed after the result.
