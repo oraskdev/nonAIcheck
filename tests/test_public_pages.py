@@ -121,3 +121,12 @@ def test_frozen_phase_f_summary_keeps_counts_limits_and_failed_holdout_visible()
     assert '/tree/817e5cd82a87723e3494cd95d442c200125922ec/scripts/research' in html
     assert '20.67' not in html and '12.17' not in html
     assert 'separate from the automatic app workflow' in public_pages.render('/')
+    followup = html.split('<h2 id="phase-g-follow-up">', 1)[1].split('<h2>Separate unseen-source test:', 1)[0]
+    assert '2026-10-04T16:24:41Z' in followup and 'separately from the frozen A–F snapshot' in followup
+    assert '1,000 additional distinct combinations' in followup
+    assert '2,000 additional measurements, with zero new provider API calls' in followup
+    assert '3,809 variants and 7,618 measurements' in followup
+    assert '7.73 / 100 with Desklib' in followup and '5.73 / 100 with Vanguard' in followup
+    assert 'did not improve on F’s 7.69 / 4.99 result' in followup
+    assert 'Below 2 on both was not reached' in followup and 'does not establish performance on unseen writing' in followup
+    assert '/blob/main/docs/recovery-research-phase-g-2026-10-04.md' in followup
