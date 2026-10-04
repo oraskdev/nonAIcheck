@@ -98,16 +98,26 @@ def test_canonical_origin_rejects_credentials_or_non_origin_settings():
                 raise AssertionError(value)
 
 
-def test_recovery_summary_keeps_research_separate_from_automatic_jobs():
+def test_frozen_phase_f_summary_keeps_counts_limits_and_failed_holdout_visible():
     html = public_pages.render('/evidence')
-    assert '23.18 / 100 with Desklib' in html and '14.44 / 100 with Vanguard' in html
-    assert '2026-10-04T14:05:21Z' in html
-    assert 'not 1,000 independent three-provider rewrites' in html
-    assert '21 completed provider requests, plus one failed attempt' in html
+    assert '7.69 / 100 with Desklib' in html and '4.99 / 100 with Vanguard' in html
+    assert '2026-10-04T15:44:06Z' in html and 'phases A–F only' in html
+    rows = re.findall(r'<tr><th scope="row">([A-F])</th><td>([\d,]+)</td></tr>', html)
+    assert rows == [('A', '1,000'), ('B', '1,000'), ('C', '1'), ('D', '450'), ('E', '58'), ('F', '300')]
+    assert sum(int(value.replace(',', '')) for _, value in rows) == 2809
+    assert '2,809 distinct variants and 5,618 exact detector measurements' in html
+    assert 'not 2,809 independent three-provider rewrites' in html
+    assert '41 completed writing/review-provider requests, plus one failed attempt' in html
+    assert 'below 2 on both was not reached' in html
     assert 'not what an ordinary app job runs' in html
     assert 'neither was held out' in html
+    assert html.index('adaptive research on one synthetic English source') < html.index('7.69 / 100 with Desklib')
+    assert '21.13 to 15.99 / 100' in html and '36.85 to 99.95 / 100' in html
+    assert 'performance gate failed' in html
+    assert 'Experimental workflows remain disabled for customer quotes' in html
     assert 'retained privately' in html
+    assert '/blob/main/docs/recovery-research-phase-f-2026-10-04.md' in html
     assert '/blob/5a46f806a9897fc04feef8305a0ae1d0342fc5c5/docs/recovery-research-results-2026-10-04.md' in html
-    assert '/tree/5a46f806a9897fc04feef8305a0ae1d0342fc5c5/scripts/research' in html
+    assert '/tree/817e5cd82a87723e3494cd95d442c200125922ec/scripts/research' in html
     assert '20.67' not in html and '12.17' not in html
     assert 'separate from the automatic app workflow' in public_pages.render('/')
