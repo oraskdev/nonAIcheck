@@ -378,33 +378,77 @@ def phase_c_jobs(run, source, claims):
     return jobs
 
 PHASE_D_PLAN_SHA = '1c4581294ad31e3b6fcd8f15cbeee6e4482e233d1417ac3c854ef889cf2d9df8'
+PHASE_E_PLAN_SHA = 'd5511259ee38f90aaf2ee5b805e7c41402afc19ca6664ca2e040d4b2da8a2919'
+FROZEN_RESEARCH_HELPERS = {'scripts/research/recovery.py','scripts/research/phase_d.py','scripts/research/phase_b.py','scripts/research/score.py'}
 
 
 def phase_d_jobs(run, source, claims, previous):
-    folder = run / 'phase-d'
+    return patch_phase_jobs(run,source,claims,previous,'D')
+
+
+def phase_e_jobs(run, source, claims, previous):
+    if (run/'phase-e/protocol.json').exists():
+        phase_e_prerequisites(run,source,claims,previous)
+    return patch_phase_jobs(run,source,claims,previous,'E')
+
+
+def phase_e_prerequisites(run, source, claims, previous):
+    plan=read(run/'phase-e/plan-draft.json')
+    if sha(json.dumps(plan,sort_keys=True)) != PHASE_E_PLAN_SHA:
+        raise ValueError('Phase E prospective plan changed')
+    hashes=plan.get('frozen_shared_code_sha256',{})
+    if set(hashes) != FROZEN_RESEARCH_HELPERS or any(sha((ROOT/name).read_text()) != digest for name,digest in hashes.items()):
+        raise ValueError('Phase E frozen shared helper changed')
+    gate_path=run/'phase-d/verified-gate-10.json'
+    if sha(gate_path.read_text()) != plan.get('first_verified_d_below10_checkpoint_sha256'):
+        raise ValueError('Phase E first verified D checkpoint changed')
+    gate=read(gate_path);job=gate['job'];source_hash=sha(source)
+    d_jobs=[j for j in previous if j.get('phase')=='D']
+    if len(d_jobs) != 450 or len({j['sha256'] for j in d_jobs}) != 450:
+        raise ValueError('Phase E requires all 450 distinct Phase D texts')
+    for item in d_jobs:
+        if item.get('source_sha256') != source_hash or sha(item['text']) != item['sha256'] or load_pair(run,item['sha256']) is None:
+            raise ValueError('Phase E requires complete exact paired Phase D receipts')
+    reviews=[(p,read(p)) for p in (run/'reviews').glob('*.json')]
+    pair=load_pair(run,job['sha256'])
+    approved=approvals(reviews,job['sha256'],source_hash,{c['id'] for c in claims})
+    if (gate.get('phase')!='D' or gate.get('threshold')!=.1 or job not in d_jobs
+        or pair is None or gate.get('measurements')!=pair or len(approved)<2
+        or max(pair[d]['measurement']['ai_score'] for d,_ in DETECTORS)>=.1
+        or gate.get('selected',{}).get('sha256')!=job['sha256']):
+        raise ValueError('Phase E first below10 checkpoint lacks exact measurements and two reviews')
+
+
+def patch_phase_jobs(run, source, claims, previous, phase):
+    if phase not in ('D','E'):
+        raise ValueError('Unsupported patch phase')
+    letter=phase.lower()
+    max_banks,max_calls,max_texts,plan_sha=(3,9,450,PHASE_D_PLAN_SHA) if phase=='D' else (2,6,300,PHASE_E_PLAN_SHA)
+    folder = run / ('phase-'+letter)
     paths = sorted((folder / 'jobs').glob('*.json'))
     if not (folder / 'protocol.json').exists():
         if paths:
-            raise ValueError('Phase D jobs exist without activation')
+            raise ValueError(f'Phase {phase} jobs exist without activation')
         return []
     plan, approval, protocol = (read(folder / name) for name in ('plan-draft.json','approval.json','protocol.json'))
-    expected_approval = {'authorized':True,'phase':'D','plan_sha256':PHASE_D_PLAN_SHA,'max_banks':3,'max_new_calls':9,'max_new_distinct':450,'per_bank_max':150,'global_budget_usd':1.5}
-    if (sha(json.dumps(plan,sort_keys=True)) != PHASE_D_PLAN_SHA
+    expected_approval = {'authorized':True,'phase':phase,'plan_sha256':plan_sha,'max_banks':max_banks,'max_new_calls':max_calls,'max_new_distinct':max_texts,'per_bank_max':150,'global_budget_usd':1.5}
+    if phase=='E':expected_approval.update(max_output_tokens=4500,patch_range=[14,18])
+    if (sha(json.dumps(plan,sort_keys=True)) != plan_sha
         or any(approval.get(k) != v for k,v in expected_approval.items())
-        or protocol.get('status') != 'activated' or protocol.get('plan_sha256') != PHASE_D_PLAN_SHA
+        or protocol.get('status') != 'activated' or protocol.get('plan_sha256') != plan_sha
         or protocol.get('approval') != approval or protocol.get('source_sha256') != sha(source)
         or any(protocol.get(key) != value for key,value in plan.items() if key != 'status')):
-        raise ValueError('Phase D activation differs from the fixed prospective plan or source')
+        raise ValueError(f'Phase {phase} activation differs from the fixed prospective plan or source')
     ledger = read(run / 'ledger.json')
     requests = ledger['requests']
-    d_requests = [k for k in requests if k.startswith('phase-d-')]
-    allowed = {f'phase-d-r{n:02d}-{p}' for n in range(1,4) for p in ('claude','openai','grok')}
-    if (set(d_requests) - allowed or len(d_requests) > 9 or ledger.get('limit_usd') != 1.5
+    d_requests = [k for k in requests if k.startswith('phase-'+letter+'-')]
+    allowed = {f'phase-{letter}-r{n:02d}-{p}' for n in range(1,max_banks+1) for p in ('claude','openai','grok')}
+    if (set(d_requests) - allowed or len(d_requests) > max_calls or ledger.get('limit_usd') != 1.5
         or sum(Decimal(str(x.get('actual_usd',x['reserved_usd']))) for x in requests.values()) > Decimal('1.50')):
-        raise ValueError('Phase D request identities or shared budget exceed the frozen limits')
+        raise ValueError(f'Phase {phase} request identities or shared budget exceed the frozen limits')
     jobs = [read(path) for path in paths]
-    if len(jobs) > 450 or len({j['sha256'] for j in jobs}) != len(jobs):
-        raise ValueError('Phase D distinct-text count or uniqueness differs')
+    if len(jobs) > max_texts or len({j['sha256'] for j in jobs}) != len(jobs):
+        raise ValueError(f'Phase {phase} distinct-text count or uniqueness differs')
     excluded = {sha(source)} | {j['sha256'] for j in previous}
     if (run/'baseline.json').exists():
         excluded.add(read(run/'baseline.json')['sha256'])
@@ -413,37 +457,37 @@ def phase_d_jobs(run, source, claims, previous):
         history = read(archived)
         excluded.update(row['sha256'] for row in [history['original'],history['baseline'],history['selected'],*history['trials'],*history['repairs']] if row.get('sha256'))
     if excluded & {j['sha256'] for j in jobs}:
-        raise ValueError('Phase D includes a previously counted or reference text')
+        raise ValueError(f'Phase {phase} includes a previously counted or reference text')
     known = {j['id']:j for j in previous + jobs}
     allowed_parents = {j['id']:j for j in previous if j.get('phase') != 'C'}
     allowed_parents.update({j['id']:j for j in jobs})
     ids = {c['id'] for c in claims}
     reviews = [(p,read(p)) for p in sorted((run/'reviews').glob('*.json'))]
     bank_numbers = {j.get('bank') for j in jobs}
-    if any(type(n) is not int or not 1 <= n <= 3 for n in bank_numbers):
-        raise ValueError('Phase D candidate bank number differs')
+    if any(type(n) is not int or not 1 <= n <= max_banks for n in bank_numbers):
+        raise ValueError(f'Phase {phase} candidate bank number differs')
     for number in sorted(bank_numbers):
-        bank_folder = folder/'banks'/f'd{number:02d}'
+        bank_folder = folder/'banks'/f'{letter}{number:02d}'
         bindings = read(bank_folder/'bindings.json')
-        prefix = f'phase-d-r{number:02d}'
-        expected_paths = {f'phase-d/banks/d{number:02d}/{name}.json' for name in ('context','review','bank')} | {f'rounds/{prefix}-grok.{kind}.json' for kind in ('request','response')}
+        prefix = f'phase-{letter}-r{number:02d}'
+        expected_paths = {f'phase-{letter}/banks/{letter}{number:02d}/{name}.json' for name in ('context','review','bank')} | {f'rounds/{prefix}-grok.{kind}.json' for kind in ('request','response')}
         if set(bindings) != expected_paths or any(sha((run/path).read_text()) != digest for path,digest in bindings.items()):
-            raise ValueError('Phase D frozen context/bank/provider evidence differs')
+            raise ValueError(f'Phase {phase} frozen context/bank/provider evidence differs')
         context = read(bank_folder/'context.json'); bank=read(bank_folder/'bank.json'); parent=bank['parent']
         if (parent.get('id') not in allowed_parents or allowed_parents[parent['id']] != parent
             or sha(parent['text']) != parent.get('sha256') or parent.get('source_sha256') != sha(source)
             or context.get('parent') != parent or context.get('bank') != number
             or context.get('source_sha256') != sha(source) or bank.get('source_sha256') != sha(source)
-            or (parent.get('phase') == 'D' and parent.get('bank',number) >= number)
-            or (number == 1 and (parent['id'] != plan['initial_parent_id'] or parent['sha256'] != plan['initial_parent_sha256']))):
-            raise ValueError('Phase D parent lineage differs from its frozen context')
+            or (parent.get('phase') == phase and parent.get('bank',number) >= number)
+            or (phase == 'D' and number == 1 and (parent['id'] != plan['initial_parent_id'] or parent['sha256'] != plan['initial_parent_sha256']))):
+            raise ValueError(f'Phase {phase} parent lineage differs from its frozen context')
         pair = load_pair(run,parent['sha256'])
         parent_reviews = approvals(reviews,parent['sha256'],sha(source),ids)
         current_reviewers = {r['review']['reviewer'] for r in parent_reviews}
         if (pair is None or context.get('parent_exact_scores') != [pair[d]['measurement']['ai_score'] for d,_ in DETECTORS]
             or len(set(context.get('parent_source_reviewers',[]))) < 2
             or not set(context['parent_source_reviewers']).issubset(current_reviewers)):
-            raise ValueError('Phase D parent lacks matching paired measurements and two full source approvals')
+            raise ValueError(f'Phase {phase} parent lacks matching paired measurements and two full source approvals')
         outputs={}; prompts={}; provider_events=[]
         for name,who,model in [('claude','anthropic','claude-sonnet-5-5'),('openai','openai','gpt-6.1-sol'),('grok','xai','grok-4.7')]:
             request_id=prefix+'-'+name
@@ -452,17 +496,18 @@ def phase_d_jobs(run, source, claims, previous):
             prompt=json.loads(request['prompt']); entry=requests.get(request_id,{})
             if (request.get('provider') != who or request.get('model') != model
                 or prompt.get('source') != source or prompt.get('claims') != claims or prompt.get('current') != parent['text']
+                or (phase == 'E' and request.get('max_output_tokens') != 4500)
                 or entry.get('fingerprint') != sha(json.dumps(request,sort_keys=True))
                 or receipt.get('http_status') != 200
                 or (who == 'anthropic' and body.get('stop_reason') != 'end_turn')
                 or (who != 'anthropic' and (body.get('status') != 'completed' or body.get('incomplete_details')))):
-                raise ValueError('Phase D provider request/response does not match its completed source-bound call')
+                raise ValueError(f'Phase {phase} provider request/response does not match its completed source-bound call')
             text=''.join(x.get('text','') for x in body.get('content',[]) if x.get('type') == 'text') if who == 'anthropic' else ''.join(c.get('text','') for item in body.get('output',[]) for c in item.get('content',[]) if c.get('type') == 'output_text')
             outputs[name]=json.loads(re.sub(r'^```(?:json)?\s*|\s*```$','',text.strip()));prompts[name]=prompt
             provider_events.append(datetime.fromisoformat(entry['started_at']))
         context_time=datetime.fromisoformat(context['at'])
         if context_time > min(provider_events) or prompts['openai'].get('proposed') != outputs['claude']:
-            raise ValueError('Phase D frozen context or proposal chain differs')
+            raise ValueError(f'Phase {phase} frozen context or proposal chain differs')
         from scripts.research.recovery import valid_patch, numbers, clean
         refined=[]
         for item in outputs['openai'].get('patches',[]):
@@ -470,21 +515,21 @@ def phase_d_jobs(run, source, claims, previous):
                 continue
             patch=valid_patch(parent['text'],item)
             if patch:refined.append(patch)
-        if len(refined) > 24 or prompts['grok'].get('patches') != refined:
-            raise ValueError('Phase D reviewer did not receive the exact validated refined patches')
+        if len(refined) > (24 if phase=='D' else 18) or prompts['grok'].get('patches') != refined:
+            raise ValueError(f'Phase {phase} reviewer did not receive the exact validated refined patches')
         review=outputs['grok'];rows=review.get('patches',[])
         checked={row['id']:row for row in rows}
         if (review != read(bank_folder/'review.json') or review.get('baseline_faithful') is not True
             or review.get('baseline_issues') or len(review.get('checked_claim_ids',[])) != 32 or set(review['checked_claim_ids']) != ids
             or len(checked) != len(rows) or set(checked) != {p['id'] for p in refined}):
-            raise ValueError('Phase D full-source or exact patch approval differs from the raw response')
+            raise ValueError(f'Phase {phase} full-source or exact patch approval differs from the raw response')
         approved=[p for p in refined if checked[p['id']].get('faithful') is True and not checked[p['id']].get('issues')]
         if approved != bank.get('patches'):
-            raise ValueError('Phase D approved bank differs from its raw provider review')
+            raise ValueError(f'Phase {phase} approved bank differs from its raw provider review')
         patches={p['id']:p for p in approved}
         own=[j for j in jobs if j['bank'] == number]
         if len(own) > 150:
-            raise ValueError('Phase D per-bank text cap exceeded')
+            raise ValueError(f'Phase {phase} per-bank text cap exceeded')
         deltas={}
         if any('-c' in j['id'] for j in own):
             from scripts.research.phase_b import logit
@@ -493,54 +538,69 @@ def phase_d_jobs(run, source, claims, previous):
                 single=parent['text'][:patch['start']]+patch['replace']+parent['text'][patch['end']:]
                 measured=load_pair(run,sha(single))
                 if measured is None:
-                    raise ValueError('Phase D combination lacks exact paired single-patch ranking inputs')
+                    raise ValueError(f'Phase {phase} combination lacks exact paired single-patch ranking inputs')
                 deltas[patch['id']]=[logit(measured[d]['measurement']['ai_score'])-original for (d,_),original in zip(DETECTORS,base)]
         for job in own:
             patch_ids=job.get('patch_ids',[])
-            if (job.get('phase') != 'D' or job.get('source_sha256') != sha(source)
-                or re.fullmatch(f'd{number:02d}-[sc][0-9]{{3}}',job['id']) is None
+            if (job.get('phase') != phase or job.get('source_sha256') != sha(source)
+                or re.fullmatch(f'{letter}{number:02d}-[sc][0-9]{{3}}',job['id']) is None
                 or job.get('parent_id') != parent['id'] or job.get('parent_sha256') != parent['sha256']
                 or not patch_ids or len(patch_ids) != len(set(patch_ids)) or any(i not in patches for i in patch_ids)):
-                raise ValueError('Phase D candidate identity or approved patch IDs differ')
+                raise ValueError(f'Phase {phase} candidate identity or approved patch IDs differ')
             chosen=sorted((patches[i] for i in patch_ids),key=lambda p:p['start'])
             if any(a['end'] > b['start'] for a,b in zip(chosen,chosen[1:])):
-                raise ValueError('Phase D candidate combines overlapping patches')
+                raise ValueError(f'Phase {phase} candidate combines overlapping patches')
             text=parent['text']
             for patch in reversed(chosen):
                 if text[patch['start']:patch['end']] != patch['find']:
-                    raise ValueError('Phase D candidate exact span changed')
+                    raise ValueError(f'Phase {phase} candidate exact span changed')
                 text=text[:patch['start']]+patch['replace']+text[patch['end']:]
             if (text != job['text'] or sha(text) != job['sha256'] or not clean(text)
                 or numbers(text) != numbers(source) or text.split('\n')[0] != source.split('\n')[0]
                 or text.count(source.split('\n')[0]) != 1):
-                raise ValueError('Phase D candidate text/hash/protected content differs from reconstruction')
+                raise ValueError(f'Phase {phase} candidate text/hash/protected content differs from reconstruction')
             if '-s' in job['id']:
                 if len(patch_ids) != 1 or 'ranking_only_predicted_logits' in job:
-                    raise ValueError('Phase D single-patch identity differs')
+                    raise ValueError(f'Phase {phase} single-patch identity differs')
             elif '-c' in job['id']:
                 if not 2 <= len(patch_ids) <= 6 or job.get('prediction_is_not_a_measurement') is not True:
-                    raise ValueError('Phase D combination lacks rank-only prediction labeling')
+                    raise ValueError(f'Phase {phase} combination lacks rank-only prediction labeling')
                 expected=list(base)
                 for patch in approved:
                     if patch['id'] in patch_ids:
                         expected=[value+delta for value,delta in zip(expected,deltas[patch['id']])]
                 predicted=job.get('ranking_only_predicted_logits',[])
                 if len(predicted) != 2 or any(not isinstance(v,(int,float)) or not math.isfinite(v) or abs(v-e)>1e-12 for v,e in zip(predicted,expected)):
-                    raise ValueError('Phase D rank-only predictions differ from the exact single-patch inputs')
+                    raise ValueError(f'Phase {phase} rank-only predictions differ from the exact single-patch inputs')
             else:
-                raise ValueError('Phase D candidate has unknown single/combination identity')
+                raise ValueError(f'Phase {phase} candidate has unknown single/combination identity')
         singles=read(bank_folder/'singles.json')
-        if singles.get('bank') != number or len(singles.get('singles',[])) != len(approved):
-            raise ValueError('Phase D single-patch manifest differs')
+        single_ids=[j['id'] for j in own if '-s' in j['id']]
+        if (singles.get('bank') != number or len(singles.get('singles',[])) != len(approved)
+            or singles.get('new_unique') != len(single_ids) or singles.get('candidate_ids') != single_ids):
+            raise ValueError(f'Phase {phase} single-patch manifest differs')
+        queued_hashes=set()
+        previous_hashes=excluded | {j['sha256'] for j in jobs if j['bank']<number}
         for row,patch in zip(singles['singles'],approved):
             single=parent['text'][:patch['start']]+patch['replace']+parent['text'][patch['end']:]
             if row.get('patch_id') != patch['id'] or row.get('sha256') != sha(single):
-                raise ValueError('Phase D single-patch receipt hash differs from the approved patch')
+                raise ValueError(f'Phase {phase} single-patch receipt hash differs from the approved patch')
             if row.get('job_id'):
-                if row['job_id'] not in known or known[row['job_id']]['sha256'] != sha(single):
-                    raise ValueError('Phase D queued single-patch identity differs')
-            elif load_pair(run,sha(single)) is None:
-                raise ValueError('Phase D reused single patch lacks exact paired measurements')
+                duplicate=sha(single) in queued_hashes
+                if (row['job_id'] not in single_ids or known[row['job_id']]['sha256'] != sha(single)
+                    or row.get('new_unique') is not (not duplicate)
+                    or (duplicate and row.get('same_bank_duplicate') is not True)):
+                    raise ValueError(f'Phase {phase} queued single-patch identity differs')
+                queued_hashes.add(sha(single))
+            elif row.get('new_unique') is not False or sha(single) not in previous_hashes or load_pair(run,sha(single)) is None:
+                raise ValueError(f'Phase {phase} reused single patch lacks exact paired measurements')
+        if (bank_folder/'complete.json').exists():
+            completion=read(bank_folder/'complete.json')
+            combo_ids=[j['id'] for j in own if '-c' in j['id']]
+            if (completion.get('bank')!=number or completion.get('new_singles')!=len(single_ids)
+                or completion.get('new_combinations')!=len(combo_ids) or completion.get('new_unique')!=len(own)
+                or completion.get('candidate_ids')!=combo_ids or completion.get('prediction_is_not_a_measurement') is not True):
+                raise ValueError(f'Phase {phase} completed combination manifest differs')
     return jobs
 
 
@@ -566,6 +626,14 @@ def build_data(run, production_commit=None):
     phase_b = phase_b_jobs(run)
     phase_c = phase_c_jobs(run, source, claims)
     phase_d = phase_d_jobs(run, source, claims, phase_a + phase_b + phase_c)
+    phase_e = phase_e_jobs(run, source, claims, phase_a + phase_b + phase_c + phase_d)
+    phase_f_evidence=None
+    phase_f=[]
+    if (run/'phase-f').exists():
+        from scripts.research.private_report_f import phase_f_data
+        f_data=phase_f_data(run,source,claims,phase_a+phase_b+phase_c+phase_d+phase_e)
+        phase_f=f_data['jobs']
+        phase_f_evidence={key:value for key,value in f_data.items() if key!='jobs'}
     if phase_b and ({j['sha256'] for j in phase_a} & {j['sha256'] for j in phase_b} or len({j['sha256'] for j in phase_a}) != 1000):
         raise ValueError('Phase B requires 1000 distinct phase A texts and no duplicate text across phases')
     prior_hashes = {j['sha256'] for j in phase_a + phase_b}
@@ -573,8 +641,9 @@ def build_data(run, production_commit=None):
         raise ValueError('Phase C includes a previously counted candidate text')
     if {j['sha256'] for j in phase_a + phase_b + phase_c} & {j['sha256'] for j in phase_d}:
         raise ValueError('Phase D includes a previously counted candidate text')
-    jobs = phase_a + phase_b + phase_c + phase_d
-    phases = {job['id']: phase for phase, items in [('A', phase_a), ('B', phase_b), ('C', phase_c), ('D', phase_d)] for job in items}
+    study_phases=[('A',phase_a),('B',phase_b),('C',phase_c),('D',phase_d),('E',phase_e),('F',phase_f)]
+    jobs = [job for _,items in study_phases for job in items]
+    phases = {job['id']: phase for phase, items in study_phases for job in items}
     baseline = read(run / 'baseline.json')
     by_hash, by_id = {}, {}
     original_node = {'id':'source-original','text':source,'sha256':source_hash,'source_sha256':source_hash}
@@ -624,15 +693,29 @@ def build_data(run, production_commit=None):
     estimate = sum(Decimal(str(x.get('actual_usd', x['reserved_usd']))) for x in requests.values())
     completed = [x for x in requests.values() if x.get('status') == 'response_saved' and 'actual_usd' in x]
     rounds = [read(p) for p in sorted((run / 'rounds').glob('*-complete.json'))]
+    phase_e_outcome=None
+    if (run/'phase-e/final-complete.json').exists():
+        final=read(run/'phase-e/final-complete.json')
+        e_eligible=[x for x in eligible if x['phase']=='E']
+        before_e=[x for x in eligible if x['phase'] in ('A','B','C','D')]
+        e_paired=sum(x['phase']=='E' for x in paired)
+        e_requests=sum(k.startswith('phase-e-') for k in requests)
+        best=e_eligible[0] if e_eligible else None
+        if (final.get('phase')!='E' or final.get('unique_generated')!=len(phase_e) or final.get('paired')!=e_paired
+            or e_paired!=len(phase_e) or final.get('provider_requests')!=e_requests
+            or not best or final.get('selected_verified',{}).get('sha256')!=best['job']['sha256']):
+            raise ValueError('Completed Phase E summary differs from exact paired and reviewed evidence')
+        phase_e_outcome={'complete':True,'unique':len(phase_e),'paired':e_paired,'provider_requests':e_requests,
+            'best_id':best['job']['id'],'scores':best['scores'],'improved_prior_best':bool(before_e and best['maximum']<before_e[0]['maximum'])}
     return {'checkpoint_at': datetime.now(timezone.utc).isoformat(), 'source': source, 'source_sha256': source_hash,
         'original_receipts': source_pair, 'original_note': source_note, 'selected': selected,
-        'phase_counts': [{'phase': phase, 'unique': len({j['sha256'] for j in items} - {source_hash, baseline['sha256']}), 'paired': sum(item['phase'] == phase for item in paired), 'reviewed': sum(item['phase'] == phase for item in eligible), 'new_provider_requests': sum(not k.startswith(('phase-c-','phase-d-')) for k in requests) if phase == 'A' else sum(k.startswith('phase-'+phase.lower()+'-') for k in requests) if phase in ('C','D') else 0, 'verified_thresholds': {str(n): any(item['phase'] == phase and item['maximum'] < n/100 for item in eligible) for n in (30,10,2)}} for phase, items in [('A', phase_a), ('B', phase_b), ('C', phase_c), ('D', phase_d)] if items or (phase in ('C','D') and any(k.startswith('phase-'+phase.lower()+'-') for k in requests))],
+        'phase_counts': [{'phase': phase, 'unique': len({j['sha256'] for j in items} - {source_hash, baseline['sha256']}), 'paired': sum(item['phase'] == phase for item in paired), 'reviewed': sum(item['phase'] == phase for item in eligible), 'new_provider_requests': sum(not k.startswith('phase-') for k in requests) if phase == 'A' else sum(k.startswith('phase-'+phase.lower()+'-') for k in requests) if phase in ('C','D','E','F') else 0, 'verified_thresholds': {str(n): any(item['phase'] == phase and item['maximum'] < n/100 for item in eligible) for n in (30,10,2)}} for phase, items in study_phases if items or (phase in ('C','D','E','F') and any(k.startswith('phase-'+phase.lower()+'-') for k in requests)) or (phase=='F' and phase_f_evidence)],
         'unique_candidates': len({j['sha256'] for j in jobs} - {source_hash, baseline['sha256']}), 'paired_candidates': len(paired), 'reviewed_candidates': len(eligible),
         'thresholds': {str(n): any(item['maximum'] < n / 100 for item in eligible) for n in (30, 10, 2)},
         'provider_requests': len(requests), 'completed_provider_calls': len(completed), 'unknown_cost_requests': len(requests) - len(completed),
-        'completed_patch_banks': sum(x.get('status') == 'generated' for x in rounds) + int((run / 'phase-c/bank-complete.json').exists()) + len({j['bank'] for j in phase_d}), 'estimated_or_reserved_usd': str(estimate),
+        'completed_patch_banks': sum(x.get('status') == 'generated' for x in rounds) + int((run / 'phase-c/bank-complete.json').exists()) + sum(len({j['bank'] for j in items}) for items in (phase_d,phase_e)) + (phase_f_evidence['completed_patch_banks'] if phase_f_evidence else 0), 'estimated_or_reserved_usd': str(estimate),
         'cost_limit_usd': ledger['limit_usd'], 'protocol': protocol, 'production_commit': production_commit,
-        'end_to_end': end_to_end(run, source), 'holdout': holdout_data(run)}
+        'end_to_end': end_to_end(run, source), 'holdout': holdout_data(run),'phase_e_outcome':phase_e_outcome,'phase_f_evidence':phase_f_evidence}
 
 
 CSS = '''
@@ -685,6 +768,14 @@ def render(data):
         phase_note += ' Phase C separately starts a fresh full draft from the original with three new provider calls; a descendant patch bank is permitted only after competitive paired scores and two complete source reviews.'
     if any(row['phase'] == 'D' for row in data['phase_counts']):
         phase_note += ' Phase D separately adds at most three reviewed patch banks and 450 new distinct texts under the same shared API cap. Each bank starts from an exact-measured parent with two complete approvals. Exact single-patch measurements rank new combinations; predictions never become reported measurements.'
+    if data.get('phase_e_outcome'):
+        outcome=data['phase_e_outcome']
+        phase_note += f' Phase E completed {outcome["unique"]} distinct paired texts with {outcome["provider_requests"]} new provider requests. Its best twice-reviewed draft scored {outcome["scores"]["desklib"]*100:.2f} on Desklib and {outcome["scores"]["vanguard"]*100:.2f} on Vanguard out of 100. It '+('improved' if outcome['improved_prior_best'] else 'did not improve')+' the earlier study’s best maximum score. Requested proposal counts and the 300-text cap are not completed test counts; reused exact texts do not add new tests.'
+    elif any(row['phase'] == 'E' for row in data['phase_counts']):
+        phase_note += ' Phase E is a separately approved continuation after all 450 Phase D texts were measured and the first both-below10 checkpoint was frozen. Only generated texts and actual paired receipts appear in its counts.'
+    if data.get('phase_f_evidence'):
+        f=data['phase_f_evidence']
+        phase_note += f' Phase F status: {esc(f["state"].replace("_"," "))}. It re-examines {f["cached_proposal_count"]} distinct edits reconstructed from {f["cached_origin_count"]} cached Claude proposals, with no new Claude call. These cached proposals are not new measured tests. Its separate limit is two new requests, to OpenAI and Grok, and 300 new distinct texts under the same shared API budget. Actual generated, paired and twice-reviewed counts are shown separately above; predicted combination ranks never qualify a result.'
     holdout = holdout_section(data.get('holdout'))
     holdout_notice = '<div class="notice"><strong>Separate unseen-source check: performance gate failed.</strong> The source review passed, but the frozen business-note test missed its required improvement and worsened on the detector withheld from selection. The experimental mode remains disabled. Read the complete result below.</div>' if data.get('holdout') and not data['holdout']['gate_passed'] else ''
     header_scope = 'Adaptive research plus a separate unseen-source check' if data.get('holdout') else 'One English research source'

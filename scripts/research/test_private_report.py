@@ -330,3 +330,105 @@ def test_phase_d_rejects_previously_counted_hash(phase_d_fixture):
     run,source,claims,previous,jobs=phase_d_fixture
     with pytest.raises(ValueError,match='previously counted'):
         phase_d_jobs(run,source,claims,previous+[{**jobs[-1],'id':'old-phase-a','phase':'A'}])
+
+
+@pytest.fixture
+def phase_e_fixture(phase_d_fixture,monkeypatch):
+    from scripts.research import private_report as report
+    run,source,claims,previous,_=phase_d_fixture
+    # Use synthetic D evidence to exercise the common bank schema under E's own scope.
+    for old in list(run.rglob('*.json')):
+        name=str(old.relative_to(run)).replace('phase-d','phase-e').replace('d01','e01')
+        content=old.read_text().replace('phase-d','phase-e').replace('d01','e01').replace('"phase": "D"','"phase": "E"')
+        (run/name).parent.mkdir(parents=True,exist_ok=True);(run/name).write_text(content)
+    plan=json.loads((run/'phase-e/plan-draft.json').read_text())
+    plan.pop('initial_parent_id');plan.pop('initial_parent_sha256')
+    plan_hash=digest(json.dumps(plan,sort_keys=True));monkeypatch.setattr(report,'PHASE_E_PLAN_SHA',plan_hash)
+    approval={'authorized':True,'phase':'E','plan_sha256':plan_hash,'max_banks':2,'max_new_calls':6,'max_new_distinct':300,'per_bank_max':150,'global_budget_usd':1.5,'max_output_tokens':4500,'patch_range':[14,18]}
+    write(run/'phase-e/plan-draft.json',plan);write(run/'phase-e/approval.json',approval);write(run/'phase-e/protocol.json',{**plan,'status':'activated','plan_sha256':plan_hash,'approval':approval})
+    ledger=json.loads((run/'ledger.json').read_text())
+    for name in ['claude','openai','grok']:
+        path=run/f'rounds/phase-e-r01-{name}.request.json';request=json.loads(path.read_text());request['max_output_tokens']=4500;write(path,request)
+        ledger['requests'][f'phase-e-r01-{name}']['fingerprint']=digest(json.dumps(request,sort_keys=True))
+    write(run/'ledger.json',ledger)
+    path=run/'phase-e/banks/e01/bindings.json';binding=json.loads(path.read_text());write(path,{name:digest((run/name).read_text()) for name in binding})
+    return run,source,claims,previous
+
+
+def test_phase_e_uses_own_scope_without_requiring_d_initial_parent(phase_e_fixture):
+    from scripts.research.private_report import patch_phase_jobs
+    run,source,claims,previous=phase_e_fixture
+    jobs=patch_phase_jobs(run,source,claims,previous,'E')
+    assert len(jobs)==3 and all(j['phase']=='E' for j in jobs)
+
+
+def test_phase_e_rejects_overlarge_response_cap_even_with_rebound_request(phase_e_fixture):
+    from scripts.research.private_report import patch_phase_jobs
+    run,source,claims,previous=phase_e_fixture
+    path=run/'rounds/phase-e-r01-openai.request.json';request=json.loads(path.read_text());request['max_output_tokens']=8000;write(path,request)
+    path=run/'ledger.json';ledger=json.loads(path.read_text());ledger['requests']['phase-e-r01-openai']['fingerprint']=digest(json.dumps(request,sort_keys=True));write(path,ledger)
+    with pytest.raises(ValueError,match='Phase E provider request/response'):
+        patch_phase_jobs(run,source,claims,previous,'E')
+
+
+def test_phase_e_rejects_new_text_marked_as_reuse(phase_e_fixture):
+    from scripts.research.private_report import patch_phase_jobs
+    run,source,claims,previous=phase_e_fixture
+    path=run/'phase-e/banks/e01/singles.json';manifest=json.loads(path.read_text());manifest['singles'][0]['new_unique']=False;write(path,manifest)
+    with pytest.raises(ValueError,match='queued single-patch identity'):
+        patch_phase_jobs(run,source,claims,previous,'E')
+
+
+def test_phase_e_rejects_more_than_18_refined_patches(phase_e_fixture):
+    from scripts.research.private_report import patch_phase_jobs
+    from scripts.research.recovery import valid_patch
+    run,source,claims,previous=phase_e_fixture
+    response_path=run/'rounds/phase-e-r01-openai.response.json';receipt=json.loads(response_path.read_text())
+    result=json.loads(receipt['body']['output'][0]['content'][0]['text'])
+    result['patches'] += [{**result['patches'][0],'id':f'p{i:02d}'} for i in range(3,20)]
+    receipt['body']['output'][0]['content'][0]['text']=json.dumps(result);write(response_path,receipt)
+    path=run/'rounds/phase-e-r01-grok.request.json';request=json.loads(path.read_text());prompt=json.loads(request['prompt']);prompt['patches']=[valid_patch(source,p) for p in result['patches']];request['prompt']=json.dumps(prompt);write(path,request)
+    path=run/'ledger.json';ledger=json.loads(path.read_text());ledger['requests']['phase-e-r01-grok']['fingerprint']=digest(json.dumps(request,sort_keys=True));write(path,ledger)
+    path=run/'phase-e/banks/e01/bindings.json';binding=json.loads(path.read_text());write(path,{name:digest((run/name).read_text()) for name in binding})
+    with pytest.raises(ValueError,match='reviewer did not receive the exact validated refined patches'):
+        patch_phase_jobs(run,source,claims,previous,'E')
+
+
+@pytest.fixture
+def phase_e_prerequisites_fixture(tmp_path,monkeypatch):
+    from scripts.research import private_report as report
+    root=tmp_path/'code';run=tmp_path/'run';source='Synthetic prerequisite source.';sh=digest(source)
+    helpers={}
+    for name in report.FROZEN_RESEARCH_HELPERS:
+        path=root/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('# Frozen test helper\n');helpers[name]=digest(path.read_text())
+    monkeypatch.setattr(report,'ROOT',root)
+    claims=[{'id':f'G{i:02d}','text':'Synthetic claim.'} for i in range(1,33)]
+    jobs=[]
+    for i in range(450):
+        text=f'Synthetic measured D candidate {i}.';job={'id':f'd{i:03d}','phase':'D','text':text,'sha256':digest(text),'source_sha256':sh};jobs.append(job)
+        for detector in ['desklib','vanguard']:score(run,job['sha256'],detector,.08)
+    for who in ['first','second']:write(run/f'reviews/gate-{who}.json',review(jobs[0]['sha256'],sh,who))
+    gate={'phase':'D','threshold':.1,'job':jobs[0],'measurements':report.load_pair(run,jobs[0]['sha256']),'selected':{'sha256':jobs[0]['sha256']}}
+    path=run/'phase-d/verified-gate-10.json';write(path,gate)
+    plan={'frozen_shared_code_sha256':helpers,'first_verified_d_below10_checkpoint_sha256':digest(path.read_text())}
+    write(run/'phase-e/plan-draft.json',plan);monkeypatch.setattr(report,'PHASE_E_PLAN_SHA',digest(json.dumps(plan,sort_keys=True)))
+    return run,source,claims,jobs,root
+
+
+def test_phase_e_requires_complete_450_and_immutable_helpers(phase_e_prerequisites_fixture):
+    from scripts.research.private_report import phase_e_prerequisites
+    run,source,claims,jobs,root=phase_e_prerequisites_fixture
+    phase_e_prerequisites(run,source,claims,jobs)
+    with pytest.raises(ValueError,match='450 distinct'):
+        phase_e_prerequisites(run,source,claims,jobs[:-1])
+    (root/'scripts/research/recovery.py').write_text('# Changed helper\n')
+    with pytest.raises(ValueError,match='frozen shared helper'):
+        phase_e_prerequisites(run,source,claims,jobs)
+
+
+def test_phase_e_requires_exact_checkpoint_pair_and_two_current_approvals(phase_e_prerequisites_fixture):
+    from scripts.research.private_report import phase_e_prerequisites
+    run,source,claims,jobs,root=phase_e_prerequisites_fixture
+    (run/'reviews/gate-second.json').unlink()
+    with pytest.raises(ValueError,match='two reviews'):
+        phase_e_prerequisites(run,source,claims,jobs)
