@@ -29,7 +29,7 @@ def worker(which, shard, count, seconds, phase="A", reference_only=False, drain=
     revision = DESK_REV if which == "desklib" else VANG_REV
     while time.monotonic() - started < seconds and not (RUN / "stop-scoring").exists():
         pending = False
-        job_directory = RUN / "jobs" if phase == "A" else RUN / ("phase-b/jobs" if phase == "B" else "phase-c/jobs")
+        job_directory = RUN / "jobs" if phase == "A" else RUN / ("phase-" + phase.lower() + "/jobs")
         original = RUN / "source-original.json"
         paths = [original] if reference_only else [RUN / "baseline.json", *([original] if original.exists() else []), *job_directory.glob("*.json")]
         jobs = [read(path) for path in paths]
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     p.add_argument("--shard", type=int, default=0)
     p.add_argument("--count", type=int, default=1)
     p.add_argument("--seconds", type=int, default=7200)
-    p.add_argument("--phase", choices=["A", "B", "C"], default="A")
+    p.add_argument("--phase", choices=["A", "B", "C", "D"], default="A")
     a = p.parse_args()
     if a.action == "download": download(a.detector)
     else: worker(a.detector, a.shard, a.count, a.seconds, a.phase, a.action == "reference", a.action == "drain")
