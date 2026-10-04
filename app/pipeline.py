@@ -18,6 +18,9 @@ def score(assessment):
 
 
 def run(blocks, options, progress):
+    if options.get("writing_workflow") == "bounded-patch-v1":
+        from .bounded_patch import run as bounded_run
+        return bounded_run(blocks, options, progress)
     # Old stored quotes predate provider choice and consented only to GPTZero.
     provider = options.get("detector_provider") or "gptzero"
     name = "txtzi detector" if provider == "local" else "GPTZero"

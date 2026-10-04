@@ -2,6 +2,7 @@ import json
 import logging
 import threading
 import time
+from contextlib import contextmanager
 from datetime import datetime, timezone
 
 from sqlalchemy import delete, select, update
@@ -14,6 +15,43 @@ from .db import AuthSession, Document, Ledger, ResetToken, SessionLocal, User, W
 from .pricing import count_words
 
 log = logging.getLogger(__name__)
+
+
+def renew_lease(job_id, token, **values):
+    """Only the current, unexpired owner may extend or update a running job."""
+    with SessionLocal() as db:
+        instant = now()
+        result = db.execute(update(Document).where(
+            Document.id == job_id, Document.status == "processing",
+            Document.lease_token == token, Document.lease_until >= instant,
+        ).values(lease_until=instant + 600, updated_at=instant, **values))
+        db.commit()
+        return bool(result.rowcount)
+
+
+@contextmanager
+def lease_heartbeat(job_id, token):
+    """Renew during blocking provider/model work; never revive a lost lease."""
+    stop, lost = threading.Event(), threading.Event()
+
+    def beat():
+        while not stop.wait(30):
+            try:
+                if not renew_lease(job_id, token):
+                    lost.set()
+                    return
+            except Exception:
+                # Stop admitting further stages when ownership cannot be verified.
+                lost.set()
+                return
+
+    thread = threading.Thread(target=beat, daemon=True, name="txtzi-lease")
+    thread.start()
+    try:
+        yield lost
+    finally:
+        stop.set()
+        thread.join(timeout=5)
 
 
 def claim_job():
@@ -31,15 +69,18 @@ def process_job(job_id, token):
     try:
         with SessionLocal() as db:
             doc = db.get(Document, job_id)
+            if (not doc or doc.status != "processing" or doc.lease_token != token
+                    or not doc.lease_until or doc.lease_until < now()):
+                return
             blocks = decrypt(doc.source)
             options = json.loads(doc.options)
-        def progress(percent, stage):
-            with SessionLocal() as db:
-                result = db.execute(update(Document).where(Document.id == job_id, Document.status == "processing", Document.lease_token == token).values(progress=percent, stage=stage, lease_until=now() + 600, updated_at=now()))
-                db.commit()
-                if not result.rowcount:
+        with lease_heartbeat(job_id, token) as lost:
+            def progress(percent, stage):
+                if lost.is_set() or not renew_lease(job_id, token, progress=percent, stage=stage):
                     raise RuntimeError("Job ownership changed")
-        revised, report = pipeline.run(blocks, options, progress)
+            revised, report = pipeline.run(blocks, options, progress)
+            if lost.is_set() or not renew_lease(job_id, token):
+                raise RuntimeError("Job ownership changed")
         before, after = report["before_detector"], report["after_detector"]
         # Recomposed paragraphs have new identities and cannot be compared by position.
         # A null edit count deliberately avoids presenting an inaccurate zip-based count.

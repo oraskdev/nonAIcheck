@@ -1,0 +1,39 @@
+{
+  "mode": "submission",
+  "endpoint": "https://api.indexnow.org/indexnow",
+  "payload": {
+    "host": "txtzi.onrender.com",
+    "key": "12380250f3f247ca824af72f2dd29f8b",
+    "keyLocation": "https://txtzi.onrender.com/12380250f3f247ca824af72f2dd29f8b.txt",
+    "urlList": [
+      "https://txtzi.onrender.com/",
+      "https://txtzi.onrender.com/about",
+      "https://txtzi.onrender.com/how-it-works",
+      "https://txtzi.onrender.com/pricing",
+      "https://txtzi.onrender.com/evidence",
+      "https://txtzi.onrender.com/ai-detector-guide",
+      "https://txtzi.onrender.com/document-cleanup",
+      "https://txtzi.onrender.com/privacy",
+      "https://txtzi.onrender.com/terms",
+      "https://txtzi.onrender.com/static/research-ten-trials.html"
+    ]
+  },
+  "submitted": true,
+  "checked": [
+    "https://txtzi.onrender.com/",
+    "https://txtzi.onrender.com/about",
+    "https://txtzi.onrender.com/how-it-works",
+    "https://txtzi.onrender.com/pricing",
+    "https://txtzi.onrender.com/evidence",
+    "https://txtzi.onrender.com/ai-detector-guide",
+    "https://txtzi.onrender.com/document-cleanup",
+    "https://txtzi.onrender.com/privacy",
+    "https://txtzi.onrender.com/terms",
+    "https://txtzi.onrender.com/static/research-ten-trials.html"
+  ],
+  "status_code": 202,
+  "accepted": true,
+  "response": "",
+  "submitted_at": "2026-10-04T13:40:15.725321+00:00",
+  "notice": "Receipt only; indexing and recommendations are not guaranteed."
+}

@@ -49,12 +49,12 @@ Do not insert invisible characters, unusual Unicode substitutions or intentional
 """
 
 
-def _request(url, headers, payload):
-    for attempt in range(2):
+def _request(url, headers, payload, *, max_attempts=2, timeout_seconds=100):
+    for attempt in range(max_attempts):
         try:
-            with httpx.Client(timeout=httpx.Timeout(100, connect=15)) as client:
+            with httpx.Client(timeout=httpx.Timeout(timeout_seconds, connect=min(15, timeout_seconds))) as client:
                 response = client.post(url, headers=headers, json=payload)
-            if response.status_code in (429, 500, 502, 503, 504) and attempt == 0:
+            if response.status_code in (429, 500, 502, 503, 504) and attempt + 1 < max_attempts:
                 time.sleep(2)
                 continue
             if response.status_code >= 400:
@@ -62,21 +62,23 @@ def _request(url, headers, payload):
                 raise ProviderError(f"A writing provider returned HTTP {response.status_code}. Your payment will be returned.")
             return response.json()
         except (httpx.RequestError, ValueError) as exc:
-            if attempt == 0:
+            if attempt + 1 < max_attempts:
                 time.sleep(1)
                 continue
             raise ProviderError("A writing provider could not be reached. Your payment will be returned.") from exc
     raise ProviderError("Provider request failed.")
 
 
-def invoke(provider, system, prompt, response_schema=None):
+def invoke(provider, system, prompt, response_schema=None, *, max_output_tokens=8000,
+           timeout_seconds=100, max_attempts=2, preserve_unknown_usage=False):
     if provider == "anthropic":
-        payload = {"model": settings.anthropic_model, "max_tokens": 8000, "system": system,
+        payload = {"model": settings.anthropic_model, "max_tokens": max_output_tokens, "system": system,
                    "messages": [{"role": "user", "content": prompt}]}
         if response_schema is not None:
             # Native constrained decoding; no extraction of a later JSON object from prose.
             payload["output_config"] = {"format": {"type": "json_schema", "schema": response_schema}}
-        data = _request("https://api.anthropic.com/v1/messages", {"x-api-key": settings.anthropic_key, "anthropic-version": "2023-06-01", "content-type": "application/json"}, payload)
+        data = _request("https://api.anthropic.com/v1/messages", {"x-api-key": settings.anthropic_key, "anthropic-version": "2023-06-01", "content-type": "application/json"}, payload,
+                        max_attempts=max_attempts, timeout_seconds=timeout_seconds)
         if data.get("stop_reason") != "end_turn":
             raise ProviderError("The writing provider did not return a complete revision.")
         output = "".join(c.get("text", "") for c in data.get("content", []) if c.get("type") == "text")
@@ -85,7 +87,7 @@ def invoke(provider, system, prompt, response_schema=None):
         key = settings.openai_key if provider == "openai" else settings.xai_key
         model = settings.openai_model if provider == "openai" else settings.xai_model
         url = "https://api.openai.com/v1/responses" if provider == "openai" else "https://api.x.ai/v1/responses"
-        payload = {"model": model, "instructions": system, "input": prompt, "max_output_tokens": 8000, "store": False}
+        payload = {"model": model, "instructions": system, "input": prompt, "max_output_tokens": max_output_tokens, "store": False}
         if provider == "xai":
             payload["reasoning"] = {"effort": getattr(settings, "xai_reasoning_effort", "low")}
         else:
@@ -94,14 +96,16 @@ def invoke(provider, system, prompt, response_schema=None):
             payload["input"] = "Return JSON matching the requested schema. Input data:\n" + prompt
             if model.startswith(("gpt-5", "gpt-6")):
                 payload["reasoning"] = {"effort": getattr(settings, "openai_reasoning_effort", "medium")}
-        data = _request(url, {"Authorization": "Bearer " + key, "content-type": "application/json"}, payload)
+        data = _request(url, {"Authorization": "Bearer " + key, "content-type": "application/json"}, payload,
+                        max_attempts=max_attempts, timeout_seconds=timeout_seconds)
         if data.get("status") not in (None, "completed") or data.get("incomplete_details"):
             raise ProviderError("The writing provider did not return a complete revision.")
         output = "".join(c.get("text", "") for item in data.get("output", []) for c in item.get("content", []) if c.get("type") == "output_text")
         usage = data.get("usage", {})
     else:
         raise ValueError("Unknown provider")
-    return output, {"input_tokens": usage.get("input_tokens", 0), "output_tokens": usage.get("output_tokens", 0)}
+    missing = None if preserve_unknown_usage else 0
+    return output, {"input_tokens": usage.get("input_tokens", missing), "output_tokens": usage.get("output_tokens", missing)}
 
 
 def json_output(output):

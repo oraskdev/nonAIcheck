@@ -40,6 +40,28 @@ class WorkerRefundTests(unittest.TestCase):
             self.assertEqual(decrypt(doc.result), self.blocks)
             self.assertEqual(len(db.scalars(select(Ledger)).all()), 1)
 
+    def test_wrong_owner_expired_and_completed_jobs_do_not_start_provider_work(self):
+        for status, token, until in [("processing", "other", now()+600),
+                                     ("processing", "lease", now()-1),
+                                     ("completed", "lease", now()+600)]:
+            with self.subTest(status=status, token=token):
+                with self.sessions() as db:
+                    doc = db.get(Document, self.doc_id)
+                    doc.status, doc.lease_token, doc.lease_until = status, token, until
+                    db.commit()
+                with patch("app.worker.SessionLocal", self.sessions), patch("app.worker.pipeline.run") as run:
+                    worker.process_job(self.doc_id, "lease")
+                run.assert_not_called()
+
+    def test_heartbeat_cannot_revive_expired_or_reassigned_lease(self):
+        with patch("app.worker.SessionLocal", self.sessions):
+            self.assertTrue(worker.renew_lease(self.doc_id, "lease"))
+            self.assertFalse(worker.renew_lease(self.doc_id, "wrong"))
+            with self.sessions() as db:
+                db.get(Document, self.doc_id).lease_until = now()-1
+                db.commit()
+            self.assertFalse(worker.renew_lease(self.doc_id, "lease"))
+
     def test_edit_failure_refunds_whole_job(self):
         with patch("app.worker.SessionLocal", self.sessions), patch("app.worker.pipeline.run", side_effect=RuntimeError("test")):
             worker.process_job(self.doc_id, "lease")
