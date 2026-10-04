@@ -230,3 +230,103 @@ def test_phase_c_rejects_plan_modified_after_approval(tmp_path):
     write(tmp_path/'phase-c/protocol.json',{**plan,'status':'activated','approval':approval})
     with pytest.raises(ValueError,match='frozen plan'):
         phase_c_jobs(tmp_path,'source',[])
+
+
+@pytest.fixture
+def phase_d_fixture(tmp_path, monkeypatch):
+    from scripts.research import private_report as report
+    from scripts.research.recovery import valid_patch
+    from scripts.research.phase_b import logit
+    source='Fixture title\n\nThe room gets bright light in the morning. The door stays closed during the afternoon.'
+    claims=[{'id':f'G{i:02d}','text':'Synthetic source claim.'} for i in range(1,33)]
+    parent={'id':'p1','phase':'B','text':source,'sha256':digest(source),'source_sha256':digest(source)}
+    plan={'phase':'D','status':'draft','source_sha256':digest(source),'initial_parent_id':'p1','initial_parent_sha256':parent['sha256']}
+    plan_hash=digest(json.dumps(plan,sort_keys=True));monkeypatch.setattr(report,'PHASE_D_PLAN_SHA',plan_hash)
+    approval={'authorized':True,'phase':'D','plan_sha256':plan_hash,'max_banks':3,'max_new_calls':9,'max_new_distinct':450,'per_bank_max':150,'global_budget_usd':1.5}
+    folder=tmp_path/'phase-d/banks/d01'
+    for name,data in [('plan-draft',plan),('approval',approval),('protocol',{**plan,'status':'activated','plan_sha256':plan_hash,'approval':approval})]:
+        write(tmp_path/f'phase-d/{name}.json',data)
+    proposed={'patches':[{'id':'p01','find':'The room gets bright light in the morning.','replace':'Bright light fills the room in the morning.'},{'id':'p02','find':'The door stays closed during the afternoon.','replace':'During the afternoon, the door stays closed.'}]}
+    patches=[valid_patch(source,p) for p in proposed['patches']]
+    assert all(patches)
+    approved={'baseline_faithful':True,'baseline_issues':[],'checked_claim_ids':[c['id'] for c in claims],'patches':[{'id':p['id'],'faithful':True,'issues':[]} for p in patches]}
+    context={'bank':1,'parent':parent,'parent_exact_scores':[.2,.2],'parent_source_reviewers':['one','two'],'source_sha256':digest(source),'at':'2026-10-04T00:00:00+00:00'}
+    write(folder/'context.json',context);write(folder/'review.json',approved);write(folder/'bank.json',{'parent':parent,'source_sha256':digest(source),'patches':patches})
+    requests={}
+    for suffix,provider,model,out in [('claude','anthropic','claude-sonnet-5-5',proposed),('openai','openai','gpt-6.1-sol',proposed),('grok','xai','grok-4.7',approved)]:
+        prompt={'source':source,'claims':claims,'current':source}
+        if suffix=='openai':prompt['proposed']=proposed
+        if suffix=='grok':prompt['patches']=patches
+        request={'provider':provider,'model':model,'system':'Fixture system.','prompt':json.dumps(prompt),'max_output_tokens':100,'reasoning':'low'}
+        request_id='phase-d-r01-'+suffix
+        write(tmp_path/f'rounds/{request_id}.request.json',request)
+        body={'stop_reason':'end_turn','content':[{'type':'text','text':json.dumps(out)}]} if suffix=='claude' else {'status':'completed','output':[{'content':[{'type':'output_text','text':json.dumps(out)}]}]}
+        write(tmp_path/f'rounds/{request_id}.response.json',{'http_status':200,'body':body})
+        requests[request_id]={'fingerprint':digest(json.dumps(request,sort_keys=True)),'started_at':'2026-10-04T00:01:00+00:00','reserved_usd':.1,'actual_usd':.01,'status':'response_saved'}
+    write(tmp_path/'ledger.json',{'limit_usd':1.5,'requests':requests})
+    for who in ['one','two']:write(tmp_path/f'reviews/parent-{who}.json',review(parent['sha256'],digest(source),who))
+    for detector in ['desklib','vanguard']:score(tmp_path,parent['sha256'],detector,.2)
+    singles=[];jobs=[]
+    for i,patch in enumerate(patches,1):
+        text=source[:patch['start']]+patch['replace']+source[patch['end']:]
+        job={'id':f'd01-s{i:03d}','phase':'D','bank':1,'source_sha256':digest(source),'parent_id':'p1','parent_sha256':parent['sha256'],'patch_ids':[patch['id']],'text':text,'sha256':digest(text)}
+        jobs.append(job);write(tmp_path/f'phase-d/jobs/{job["id"]}.json',job)
+        singles.append({'patch_id':patch['id'],'sha256':job['sha256'],'job_id':job['id'],'new_unique':True})
+        for detector in ['desklib','vanguard']:score(tmp_path,job['sha256'],detector,.1)
+    write(folder/'singles.json',{'bank':1,'new_unique':2,'candidate_ids':[j['id'] for j in jobs],'singles':singles})
+    combined=source
+    for patch in reversed(patches):combined=combined[:patch['start']]+patch['replace']+combined[patch['end']:]
+    combination={'id':'d01-c001','phase':'D','bank':1,'source_sha256':digest(source),'parent_id':'p1','parent_sha256':parent['sha256'],'patch_ids':[p['id'] for p in patches],'text':combined,'sha256':digest(combined),'ranking_only_predicted_logits':[2*logit(.1)-logit(.2)]*2,'prediction_is_not_a_measurement':True}
+    jobs.append(combination);write(tmp_path/'phase-d/jobs/d01-c001.json',combination)
+    names=[f'phase-d/banks/d01/{n}.json' for n in ['context','review','bank']]+[f'rounds/phase-d-r01-grok.{n}.json' for n in ['request','response']]
+    write(folder/'bindings.json',{n:digest((tmp_path/n).read_text()) for n in names})
+    return tmp_path,source,claims,[parent],jobs
+
+
+def test_phase_d_predictions_are_not_measurements(phase_d_fixture):
+    from scripts.research.private_report import phase_d_jobs, load_pair
+    run,source,claims,previous,jobs=phase_d_fixture
+    assert phase_d_jobs(run,source,claims,previous)==sorted(jobs,key=lambda j:j['id'])
+    assert load_pair(run,jobs[-1]['sha256']) is None
+
+
+def test_phase_d_rejects_changed_context_and_changed_raw_approval(phase_d_fixture):
+    from scripts.research.private_report import phase_d_jobs
+    run,source,claims,previous,jobs=phase_d_fixture
+    folder=run/'phase-d/banks/d01';path=folder/'review.json';item=json.loads(path.read_text());item['baseline_issues']=['Invented claim'];write(path,item)
+    with pytest.raises(ValueError,match='frozen context/bank/provider'):
+        phase_d_jobs(run,source,claims,previous)
+    path=folder/'bindings.json';binding=json.loads(path.read_text());binding['phase-d/banks/d01/review.json']=digest((folder/'review.json').read_text());write(path,binding)
+    with pytest.raises(ValueError,match='raw response'):
+        phase_d_jobs(run,source,claims,previous)
+
+
+def test_phase_d_rejects_rehashed_text_outside_approved_patches(phase_d_fixture):
+    from scripts.research.private_report import phase_d_jobs
+    run,source,claims,previous,jobs=phase_d_fixture
+    job={**jobs[-1],'text':jobs[-1]['text']+' Extra content.'};job['sha256']=digest(job['text']);write(run/'phase-d/jobs/d01-c001.json',job)
+    with pytest.raises(ValueError,match='reconstruction'):
+        phase_d_jobs(run,source,claims,previous)
+
+
+def test_phase_d_rejects_prediction_without_measured_inputs(phase_d_fixture):
+    from scripts.research.private_report import phase_d_jobs
+    run,source,claims,previous,jobs=phase_d_fixture
+    (run/'scores/vanguard'/(jobs[0]['sha256']+'.json')).unlink()
+    with pytest.raises(ValueError,match='paired single-patch'):
+        phase_d_jobs(run,source,claims,previous)
+
+
+def test_phase_d_rejects_changed_ranking_prediction(phase_d_fixture):
+    from scripts.research.private_report import phase_d_jobs
+    run,source,claims,previous,jobs=phase_d_fixture
+    job={**jobs[-1],'ranking_only_predicted_logits':[-100,-100]};write(run/'phase-d/jobs/d01-c001.json',job)
+    with pytest.raises(ValueError,match='rank-only predictions'):
+        phase_d_jobs(run,source,claims,previous)
+
+
+def test_phase_d_rejects_previously_counted_hash(phase_d_fixture):
+    from scripts.research.private_report import phase_d_jobs
+    run,source,claims,previous,jobs=phase_d_fixture
+    with pytest.raises(ValueError,match='previously counted'):
+        phase_d_jobs(run,source,claims,previous+[{**jobs[-1],'id':'old-phase-a','phase':'A'}])
