@@ -82,11 +82,14 @@ def load_keys():
             [("anthropic", "ANTHROPIC_API_KEY"), ("openai", "OPENAI_API_KEY"), ("xai", "XAI_API_KEY")]}
 
 
-def call(provider, request_id, system, prompt, allow_api):
+def call(provider, request_id, system, prompt, allow_api, *, max_output_tokens=None):
+    output_limit = MAX_OUTPUT if max_output_tokens is None else max_output_tokens
+    if not isinstance(output_limit, int) or not 1 <= output_limit <= MAX_OUTPUT:
+        raise ValueError("Output limit must be a positive bounded integer")
     request_file = RUN / "rounds" / (request_id + ".request.json")
     response_file = RUN / "rounds" / (request_id + ".response.json")
     request = {"provider": provider, "model": MODELS[provider], "system": system,
-               "prompt": prompt, "max_output_tokens": MAX_OUTPUT,
+               "prompt": prompt, "max_output_tokens": output_limit,
                "reasoning": "medium" if provider == "openai" else "low" if provider == "xai" else None}
     fingerprint = sha(json.dumps(request, sort_keys=True))
     if response_file.exists():
@@ -102,7 +105,7 @@ def call(provider, request_id, system, prompt, allow_api):
             raise RuntimeError("Provider key unavailable")
         output_rate = 6 if provider == "xai" else 10
         # UTF-8 byte count bounds text-token count; 8192 covers wrapper/schema overhead.
-        reserve = ((len(system.encode()) + len(prompt.encode()) + 8192) * 2 + MAX_OUTPUT * output_rate) / 1e6
+        reserve = ((len(system.encode()) + len(prompt.encode()) + 8192) * 2 + output_limit * output_rate) / 1e6
         with locked():
             book = ledger()
             if request_id in book["requests"]:
@@ -117,13 +120,13 @@ def call(provider, request_id, system, prompt, allow_api):
         if provider == "anthropic":
             url = "https://api.anthropic.com/v1/messages"
             headers = {"x-api-key": keys[provider], "anthropic-version": "2023-06-01"}
-            payload = {"model": MODELS[provider], "max_tokens": MAX_OUTPUT, "system": system,
+            payload = {"model": MODELS[provider], "max_tokens": output_limit, "system": system,
                        "messages": [{"role": "user", "content": prompt}]}
         else:
             url = "https://api.openai.com/v1/responses" if provider == "openai" else "https://api.x.ai/v1/responses"
             headers = {"Authorization": "Bearer " + keys[provider]}
             payload = {"model": MODELS[provider], "instructions": system,
-                       "input": "Return JSON.\n" + prompt, "max_output_tokens": MAX_OUTPUT, "store": False,
+                       "input": "Return JSON.\n" + prompt, "max_output_tokens": output_limit, "store": False,
                        "reasoning": {"effort": request["reasoning"]}}
             if provider == "openai":
                 payload["text"] = {"format": {"type": "json_object"}}

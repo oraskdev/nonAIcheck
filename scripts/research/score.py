@@ -94,7 +94,7 @@ if __name__ == "__main__":
     p.add_argument("--shard", type=int, default=0)
     p.add_argument("--count", type=int, default=1)
     p.add_argument("--seconds", type=int, default=7200)
-    p.add_argument("--phase", choices=["A", "B", "C", "D"], default="A")
+    p.add_argument("--phase", choices=["A", "B", "C", "D", "E"], default="A")
     a = p.parse_args()
     if a.action == "download": download(a.detector)
     else: worker(a.detector, a.shard, a.count, a.seconds, a.phase, a.action == "reference", a.action == "drain")

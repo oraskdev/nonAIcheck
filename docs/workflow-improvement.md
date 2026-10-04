@@ -112,3 +112,41 @@ The independent detector result was substantially worse. Vanguard measured only 
 | Grok | 3,656 | 1,227 | 0.014674 |
 
 This attempt used an estimated $0.047654 and took 97.902 seconds in the shared research workspace. Cumulative live workflow validation spend is $0.132010. Raw source text, output, requests and responses are retained privately; this document contains aggregate results only. No further paid attempt or tuning was performed after the result.
+
+## Separate two-detector gate and resource assessment
+
+`app/dual_detector_gate.py` implements the new, experimental version `dual-detector-gate-v1`. It performs no model loading or provider requests and changes neither frozen workflow. Customer quotes and the production dispatcher do not select it.
+
+The gate accepts a candidate only when its complete meaning review is approved for the exact source/output hashes, both fixed detector receipts cover those exact texts, **neither detector increases**, and at least one strictly improves. Missing, partial or invalid evidence retains the original. It never averages away one detector's worsening. Model revisions, inference precision and coverage are validated; Desklib section weights must reproduce its 510-token/64-token-overlap window coverage and aggregate score. This checks trusted receipt consistency, not receipt authenticity or independent retokenization.
+
+The actual frozen holdout's original/output, source review and four scoring receipts were replayed through this gate without new inference or paid calls. It correctly retained the original with the specific reason `vanguard:worsened`. Twelve focused gate tests also cover incorrect hashes/model settings, partial coverage, invalid scores, missing meaning checks, ties and either detector worsening. All ten files covered by the earlier strategy freeze remain byte-for-byte unchanged.
+
+### Measured memory and CPU
+
+The pinned checkpoint tensor payloads are 828.43 MiB for Desklib and 1,509.98 MiB for Vanguard. Their combined payload exceeds 2 GiB, but memory-mapped pages are reclaimable, so file sizes alone do not prove an out-of-memory failure.
+
+A separate Vanguard-only subprocess was therefore profiled on the two preserved holdout texts after one research Vanguard worker was stopped and its memory released. It retained FP32, SDPA, `reference_compile=False` and two Torch threads, with process affinity restricted to one CPU. Both original detector scores reproduced exactly. No original receipt was overwritten, no new candidate was generated, and no API call was made.
+
+| Resource measurement | Result |
+| --- | ---: |
+| Vanguard subprocess peak RSS | 1,817.31 MiB |
+| Total elapsed time, including imports/load/both texts | 11.6403 s |
+| Total CPU time | 11.6383 s |
+| Original-text inference | 3.1701 s |
+| Output-text inference | 2.9436 s |
+| Separate cold API-module import peak RSS | 110.64 MiB |
+| Sum of these two peaks | 1,927.96 MiB |
+| Remaining below 2 GiB before live service overhead | 120.04 MiB |
+
+The profile used the shared 8-GiB workspace with a warm filesystem cache, **not a 2-GiB memory-constrained Render container**. RSS includes shared pages, so summing separate peaks can overcount some memory; conversely, the cold API import excludes a live server, database activity, uploads, active sessions and allocator growth. It cannot establish production headroom or Render latency.
+
+Sequential isolated inference is plausible but tight. Adding Vanguard alongside the current resident Desklib singleton is not a verified safe change. The Docker image currently contains only Desklib. No infrastructure, model precision or customer workflow has been changed.
+
+### Concrete next integration boundary
+
+1. Keep the API/job coordinator free of resident detector models. Run the bounded editing/Desklib stage in an isolated child process that returns its exact selected text, source review and receipts, then exits completely. Existing local-detector paths must also use isolation; leaving a prior job's Desklib singleton in the API process defeats this memory boundary.
+2. Run a separate, pinned Vanguard child on the original and selected candidate, serially, and wait for it to exit. This adds at most two Vanguard assessments to the bounded Desklib workflow. The API process continues its existing ownership heartbeat while waiting. Enforce finite subprocess deadlines and one detector child at a time; never retry paid provider work after an ambiguous interruption.
+3. Apply the new gate. If Vanguard worsens, fails or cannot run within the resource limit, retain the original and report why. Do not try additional candidates after seeing Vanguard under this version. Because Vanguard now participates in acceptance, it is no longer a held-out validation detector for the new workflow.
+4. Before enabling any quote, test the actual image and API/coordinator under a 2-GiB/one-CPU limit with representative request and upload activity, confirming peak memory, health responsiveness, lease handling and cleanup after child exit. The two-subprocess model files and workload limits need explicit versioned quote disclosure. Reuse the recorded provider outputs for this resource test; it does not require new paid generation.
+
+This integration is a design, not a deployed runtime. The standalone decision gate is tested, but safe live service headroom remains the concrete blocker. A larger instance was neither provisioned nor authorized by this change. The no-worsening rule is a measured-result guard, not a guarantee that either detector will reach a low score.
