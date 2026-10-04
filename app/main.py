@@ -11,13 +11,13 @@ from pathlib import Path
 import httpx
 import stripe
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from sqlalchemy import delete, func, select, text as sql_text, update
 from sqlalchemy.exc import IntegrityError
 
-from . import billing
+from . import billing, public_pages
 from .config import ROOT, settings
 from .db import Audit, AuthSession, Document, Ledger, Payment, ResetToken, SessionLocal, User, decrypt, encrypt, init_db, now, uid
 from .documents import DocumentError, EXPORTERS, block, export_body, extract_file, normalize_blocks
@@ -60,8 +60,9 @@ async def secure_requests(request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-    if path.startswith("/api/"):
+    if path.startswith("/api/") or path in ("/healthz", "/openapi.json") or any(key in request.query_params for key in ("reset", "setup", "checkout")):
         response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Robots-Tag"] = "noindex, nofollow"
     if settings.production:
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
@@ -452,12 +453,44 @@ def grant_credits(data: CreditGrant, request: Request, admin=Depends(admin_user)
     return {"ok": True}
 
 
+@app.get("/static/index.html")
+def legacy_index():
+    return RedirectResponse("/", status_code=308)
+
+
+@app.get(public_pages.RESEARCH_PATH)
+def public_research():
+    return HTMLResponse(public_pages.research_page(), headers={"Cache-Control": "no-cache"})
+
+
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 
 
 @app.get("/")
 def index():
-    return FileResponse(ROOT / "static" / "index.html", headers={"Cache-Control": "no-cache"})
+    return HTMLResponse(public_pages.render(), headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/about")
+@app.get("/how-it-works")
+@app.get("/pricing")
+@app.get("/evidence")
+@app.get("/ai-detector-guide")
+@app.get("/document-cleanup")
+@app.get("/privacy")
+@app.get("/terms")
+def public_page(request: Request):
+    return HTMLResponse(public_pages.render(request.url.path), headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/sitemap.xml")
+def sitemap():
+    return Response(public_pages.sitemap(), media_type="application/xml")
+
+
+@app.get("/" + public_pages.INDEXNOW_KEY + ".txt")
+def indexnow_key():
+    return Response(public_pages.INDEXNOW_KEY, media_type="text/plain")
 
 
 @app.get("/manifest.webmanifest")
@@ -467,4 +500,4 @@ def manifest():
 
 @app.get("/robots.txt")
 def robots():
-    return Response("User-agent: *\nDisallow: /api/\n", media_type="text/plain")
+    return Response(public_pages.robots(), media_type="text/plain")
