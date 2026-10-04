@@ -103,6 +103,134 @@ def end_to_end(run, source):
 
 
 
+
+HOLDOUT_FILES = {'app/bounded_patch.py', 'app/bounded_draft.py', 'app/providers.py', 'app/pipeline.py', 'app/hygiene.py', 'app/local_detector.py', 'app/config.py', 'tests/test_bounded_patch.py', 'tests/test_bounded_draft.py', 'tests/test_bounded_audit.py'}
+
+
+def holdout_data(run, code_root=ROOT):
+    folder = run / 'production-holdout-01'
+    if not (folder / 'result.json').exists():
+        return None
+    frozen = read(folder / 'frozen-protocol.json')
+    start = read(folder / 'attempt-started.json')
+    source_meta = read(folder / 'source.json')
+    result = read(folder / 'result.json')
+    source = (folder / 'source.txt').read_text()
+    output = (folder / 'output.txt').read_text()
+    source_hash, output_hash = sha(source), sha(output)
+    mapping = frozen.get('files', {})
+    if (set(mapping) != HOLDOUT_FILES or sha(json.dumps(mapping, sort_keys=True, separators=(',', ':'))) != frozen.get('strategy_sha256')
+        or any(hashlib.sha256((code_root / name).read_bytes()).hexdigest() != digest for name, digest in mapping.items())
+        or start.get('strategy_sha256') != frozen['strategy_sha256']):
+        raise ValueError('Holdout frozen strategy or implementation binding changed')
+    expected_gate = {'full_source_review_approved': True, 'desklib_output_strictly_below': .3, 'desklib_absolute_reduction_at_least': .1}
+    if (frozen.get('workflow') != 'bounded-draft-v1' or frozen.get('quote_enablement') is not False
+        or frozen.get('no_prompt_retuning_after_input') is not True or frozen.get('attempts_allowed') != 1
+        or frozen.get('selection_detector') != 'Desklib only'
+        or frozen.get('independent_postselection_detector') != 'Vanguard original and chosen output; never candidate selection'
+        or frozen.get('prospective_gate') != expected_gate
+        or frozen.get('detector_revisions') != dict(DETECTORS)):
+        raise ValueError('Holdout frozen gate, detector or disabled-mode metadata differs')
+    blocks = read(folder / 'source-blocks.json')
+    blind = read(folder / 'blind-source-review-input.json')
+    if (source_hash != source_meta.get('text_sha256') or source_hash != start.get('source_sha256')
+        or source_meta.get('synthetic') is not True or source_meta.get('blocks') != blocks
+        or '\n\n'.join(b['text'] for b in blocks) != source
+        or '\n\n'.join(b['text'] for b in result['blocks']) != output
+        or blind.get('original') != blocks or blind.get('candidate') != result['blocks']
+        or blind.get('source_sha256') != source_hash or blind.get('candidate_sha256') != output_hash
+        or len(source.split()) != start.get('source_words') or len(source.split()) != source_meta.get('word_count')):
+        raise ValueError('Holdout exact source/output identity differs')
+    inv_path = folder / 'independent-source-inventory.json'
+    inventory = read(inv_path)
+    review = read(folder / 'independent-final-review.json')
+    ids = {f'H{i:02d}' for i in range(1, 49)}
+    claims = inventory.get('claims', [])
+    rows = review.get('claim_results', [])
+    whole = review.get('whole_source_review', {})
+    reverse = review.get('reverse_candidate_support', [])
+    body_ids = {b['id'] for b in result['blocks'] if b['type'] != 'heading'}
+    candidate_by_id = {b['id']: b for b in result['blocks']}
+    source_by_id = {b['id']: b for b in blocks}
+    claim_by_id = {c['id']: c for c in claims}
+    if (inventory.get('source_sha256') != source_hash or inventory.get('created_before_viewing_output') is not True
+        or inventory.get('claim_count') != 48 or len(claims) != 48 or set(claim_by_id) != ids
+        or review.get('inventory_file_sha256') != sha(inv_path.read_text())
+        or review.get('source_sha256') != source_hash or review.get('candidate_sha256') != output_hash or review.get('sha256') != output_hash
+        or not isinstance(review.get('reviewer'), str) or not review['reviewer'].strip()
+        or review.get('reviewed_blind_to_scores') is not True or review.get('independently_derived_inventory_before_output') is not True
+        or review.get('claim_count') != 48 or review.get('eligible') is not True or review.get('verdict') != 'pass'
+        or review.get('edits_made') is not False or review.get('issues') != []
+        or review.get('bidirectional_review_complete') is not True or review.get('title_exactly_preserved') is not True
+        or review.get('protected_numeric_multiset_preserved') is not True
+        or len(review.get('checked_claim_ids', [])) != 48 or set(review['checked_claim_ids']) != ids
+        or len(rows) != 48 or {r.get('id') for r in rows} != ids
+        or not isinstance(whole, dict) or any(whole.get(k) is not False for k in WHOLE_CHECKS)
+        or len(reverse) != len(body_ids) or {r.get('candidate_block') for r in reverse} != body_ids
+        or any(r.get('status') != 'supported' or r.get('unsupported_claims') != [] or not r.get('supported_by_claim_ids') or not set(r['supported_by_claim_ids']).issubset(ids) for r in reverse)):
+        raise ValueError('Holdout independent full-source review binding is incomplete or failed')
+    for row in rows:
+        claim = claim_by_id[row['id']]
+        candidate = candidate_by_id.get(row.get('candidate_block'), {})
+        if (row.get('status') != 'preserved' or not row.get('reason') or row.get('source_claim') != claim['statement']
+            or row.get('source_block') != claim['source_block'] or row.get('source_block') not in source_by_id
+            or not row.get('candidate_evidence') or row['candidate_evidence'] not in candidate.get('text', '')):
+            raise ValueError('Holdout claim or candidate-evidence identity differs')
+    report = result['report']
+    final_event = read(folder / '018-result.json')
+    if final_event.get('event') != 'result' or final_event.get('blocks') != result['blocks'] or final_event.get('report') != report:
+        raise ValueError('Holdout completion record does not match the result')
+    timeline = [frozen['created_at'], source_meta['authored_at'], inventory['created_at'], start['at'], final_event['recorded_at'], review['reviewed_at']]
+    times = [datetime.fromisoformat(t.replace('Z', '+00:00')) for t in timeline]
+    if times != sorted(times):
+        raise ValueError('Holdout strategy/source/inventory/run/review chronology differs')
+    comparison = report['detector_comparison']
+    attempts = comparison['attempts']
+    original_attempt = [a for a in attempts if a.get('version') == 'original' and a.get('text_sha256') == source_hash]
+    selected_attempt = [a for a in attempts if a.get('version') == comparison['selected_version'] and a.get('text_sha256') == output_hash]
+    if len(original_attempt) != 1 or len(selected_attempt) != 1:
+        raise ValueError('Holdout selected/original exact-text assessment is missing')
+    before, after = original_attempt[0]['assessment'], selected_attempt[0]['assessment']
+    if report.get('before_detector') != before or report.get('after_detector') != after or report.get('writing_method') != frozen['workflow']:
+        raise ValueError('Holdout report differs from its selected exact-text assessment')
+    for digest, measurement in [(source_hash, before), (output_hash, after)]:
+        validate_score({'sha256':digest, 'revision':DESK_REV, 'measurement':measurement}, digest, 'desklib', DESK_REV)
+    pair = {label: {'desklib': {'sha256':digest, 'revision':DESK_REV, 'measurement':measurement}, 'vanguard':read(folder / f'vanguard-{name}.json')}
+        for label, digest, measurement, name in [('original', source_hash, before, 'original'), ('output', output_hash, after, 'output')]}
+    for label, receipts in pair.items():
+        receipt = receipts['vanguard']
+        validate_score(receipt, source_hash if label == 'original' else output_hash, 'vanguard', VANG_REV)
+        if (receipt.get('excluded_from_research_phase_counts') is not True
+            or receipt.get('purpose') != 'Held-out production E2E evaluation only; never used for selection or retuning'
+            or datetime.fromisoformat(receipt['measured_at']) <= times[-2]):
+            raise ValueError('Holdout Vanguard is not bound to postselection evaluation')
+    completed = [read(path) for path in sorted(folder.glob('*-provider_completed.json'))]
+    usage = report.get('provider_usage', [])
+    if (len(completed) != len(usage) or {r.get('provider') for r in usage} != {'anthropic', 'openai', 'xai'}
+        or len(completed) > frozen['max_new_calls'] or len(attempts) > frozen['max_assessments']):
+        raise ValueError('Holdout completed provider calls or assessment budget differs')
+    for event, item in zip(completed, usage):
+        if (event.get('event') != 'provider_completed' or event.get('status') != 'completed'
+            or event.get('model') != frozen['models'].get(event.get('provider'))
+            or event.get('request_sha256') != sha(event['model'] + event['system'] + event['prompt'])
+            or not isinstance(event.get('raw_output'), str) or not event['raw_output']
+            or any(event.get(key) != value for key, value in item.items())
+            or any(event.get(key) != event.get('usage', {}).get(key) for key in ('input_tokens', 'output_tokens'))):
+            raise ValueError('Holdout provider usage is not bound to completed request evidence')
+    workflow = report['bounded_workflow']
+    cost = sum(Decimal(str(u['charged_or_reserved_usd'])) for u in usage)
+    if cost != Decimal(str(workflow['estimated_or_reserved_usd'])) or cost > Decimal(str(frozen['max_estimated_or_reserved_api_usd'])):
+        raise ValueError('Holdout API accounting does not match its frozen budget')
+    reduction = before['ai_score'] - after['ai_score']
+    passed = after['ai_score'] < expected_gate['desklib_output_strictly_below'] and reduction >= expected_gate['desklib_absolute_reduction_at_least']
+    return {'id':folder.name, 'source':source, 'output':output, 'source_sha256':source_hash, 'output_sha256':output_hash,
+        'frozen_protocol':frozen, 'source_metadata':source_meta, 'independent_review':review, 'measurements':pair,
+        'source_words':len(source.split()), 'provider_calls':len(usage), 'providers':[{'provider':u['provider'],'model':u['model']} for u in usage],
+        'elapsed_seconds':workflow['elapsed_seconds'], 'cost_usd':str(cost), 'completed_at':final_event['recorded_at'],
+        'desklib_reduction_points':float(Decimal(str(before['ai_score'])) * 100 - Decimal(str(after['ai_score'])) * 100),
+        'gate_passed':passed, 'thresholds':{str(n):max(after['ai_score'], pair['output']['vanguard']['measurement']['ai_score']) < n/100 for n in (30,10,2)},
+        'vanguard_worsened':pair['output']['vanguard']['measurement']['ai_score'] > pair['original']['vanguard']['measurement']['ai_score']}
+
 def phase_b_jobs(run):
     folder = run / 'phase-b'
     paths = sorted((folder / 'jobs').glob('*.json'))
@@ -150,6 +278,105 @@ def phase_b_jobs(run):
         jobs.append(job)
     return jobs
 
+
+def phase_c_jobs(run, source, claims):
+    folder = run / 'phase-c'
+    paths = sorted((folder / 'jobs').glob('*.json'))
+    if not (folder / 'protocol.json').exists():
+        if paths:
+            raise ValueError('Phase C jobs exist without activation')
+        return []
+    protocol = read(folder / 'protocol.json')
+    approval = read(folder / 'approval.json')
+    plan = read(folder / 'plan-draft.json')
+    if (protocol.get('status') != 'activated' or protocol.get('phase') != 'C'
+        or protocol.get('approval') != approval or approval.get('authorized') is not True
+        or approval.get('phase') != 'C' or approval.get('max_new_calls') != 6
+        or approval.get('max_new_distinct') != 151 or approval.get('global_budget_usd') != 1.5
+        or approval.get('max_parent_score') != .35 or approval.get('plan_sha256') != sha(json.dumps(plan, sort_keys=True))
+        or any(protocol.get(key) != value for key, value in plan.items() if key != 'status')
+        or plan.get('source_sha256') != sha(source) or len(paths) > 151):
+        raise ValueError('Phase C activation differs from its frozen plan or source')
+    status = read(folder / 'status.json')
+    if status.get('phase') != 'C':
+        raise ValueError('Phase C status identity differs')
+    requests = read(run / 'ledger.json')['requests']
+    if sum(key.startswith('phase-c-') for key in requests) > 6:
+        raise ValueError('Phase C exceeded its frozen provider request limit')
+    if not paths:
+        return []
+    def provider_result(stage, provider):
+        request_id = f'phase-c-{stage}-{provider}'
+        request = read(run / 'rounds' / (request_id + '.request.json'))
+        receipt = read(run / 'rounds' / (request_id + '.response.json'))
+        who = {'claude':'anthropic', 'openai':'openai', 'grok':'xai'}[provider]
+        expected_model = {'anthropic':'claude-sonnet-5-5','openai':'gpt-6.1-sol','xai':'grok-4.7'}[who]
+        prompt = json.loads(request['prompt'])
+        body = receipt['body']
+        if (request.get('provider') != who or request.get('model') != expected_model
+            or prompt.get('original') != source or prompt.get('claims') != claims
+            or receipt.get('http_status') != 200
+            or (who == 'anthropic' and body.get('stop_reason') != 'end_turn')
+            or (who != 'anthropic' and (body.get('status') != 'completed' or body.get('incomplete_details')))):
+            raise ValueError('Phase C provider receipt does not match its source-bound completed request')
+        text = ''.join(x.get('text','') for x in body.get('content',[]) if x.get('type') == 'text') if who == 'anthropic' else ''.join(c.get('text','') for item in body.get('output',[]) for c in item.get('content',[]) if c.get('type') == 'output_text')
+        output = json.loads(re.sub(r'^```(?:json)?\s*|\s*```$', '', text.strip()))
+        if requests.get(request_id, {}).get('fingerprint') != sha(json.dumps(request, sort_keys=True)):
+            raise ValueError('Phase C request differs from the cost-ledger fingerprint')
+        return output, prompt
+    initial = read(folder / 'jobs/c00-draft.json')
+    first, _ = provider_result('init', 'claude')
+    second, second_prompt = provider_result('init', 'openai')
+    final, final_prompt = provider_result('init', 'grok')
+    expected_ids = {c['id'] for c in claims}
+    faithful = final.get('faithful') is True and not final.get('issues') and len(final.get('checked_claim_ids',[])) == 32 and set(final['checked_claim_ids']) == expected_ids
+    if (initial.get('kind') != 'fresh_three_provider_full_rewrite' or initial.get('parent_id') != 'source-original'
+        or initial.get('parent_sha256') != sha(source) or initial.get('provider_review_faithful') != faithful
+        or second_prompt.get('current_draft') != first.get('text') or final_prompt.get('current_draft') != second.get('text')
+        or final != read(folder / 'initializer-review.json') or initial['text'] != final.get('text','').strip()):
+        raise ValueError('Phase C fresh draft lineage differs from completed initializer evidence')
+    jobs = [read(path) for path in paths]
+    if any(j.get('phase') != 'C' for j in jobs):
+        raise ValueError('Phase C candidate phase identity differs')
+    descendants = [j for j in jobs if j['id'] != initial['id']]
+    if descendants:
+        admission = read(folder / 'admission-result.json')
+        pair = load_pair(run, initial['sha256'])
+        reviews = [(p, read(p)) for p in sorted((run / 'reviews').glob('*.json'))]
+        if (admission.get('admitted') is not True or pair is None
+            or max(pair[d]['measurement']['ai_score'] for d,_ in DETECTORS) > .35
+            or len(approvals(reviews, initial['sha256'], sha(source), expected_ids)) < 2):
+            raise ValueError('Phase C descendants lack an eligible competitive reviewed parent')
+        bank = read(folder / 'bank.json')
+        bank_review, bank_prompt = provider_result('bank', 'grok')
+        if (bank.get('parent') != initial or bank.get('source_sha256') != sha(source)
+            or bank_review != read(folder / 'bank-review.json') or bank_prompt.get('current') != initial['text']
+            or bank_review.get('baseline_faithful') is not True or bank_review.get('baseline_issues')
+            or len(bank_review.get('checked_claim_ids',[])) != 32 or set(bank_review['checked_claim_ids']) != expected_ids):
+            raise ValueError('Phase C descendant bank is not bound to its reviewed parent')
+        submitted = {p['id']:p for p in bank_prompt['patches']}
+        approved = {p['id'] for p in bank_review['patches'] if p.get('faithful') is True and not p.get('issues')}
+        patches = {p['id']:p for p in bank['patches']}
+        if any(p not in approved or item != submitted.get(p) for p,item in patches.items()):
+            raise ValueError('Phase C bank patches differ from provider-approved exact spans')
+        for job in descendants:
+            if job.get('parent_id') != initial['id'] or job.get('parent_sha256') != initial['sha256']:
+                raise ValueError('Phase C descendant parent identity differs')
+            ids = job.get('patch_ids',[])
+            if not ids or len(ids) != len(set(ids)) or any(i not in patches for i in ids):
+                raise ValueError('Phase C descendant patch identities differ')
+            chosen = sorted((patches[i] for i in ids), key=lambda p:p['start'])
+            if any(a['end'] > b['start'] for a,b in zip(chosen,chosen[1:])):
+                raise ValueError('Phase C descendant spans overlap')
+            text = initial['text']
+            for patch in reversed(chosen):
+                if text[patch['start']:patch['end']] != patch['find']:
+                    raise ValueError('Phase C descendant exact span changed')
+                text = text[:patch['start']] + patch['replace'] + text[patch['end']:]
+            if text != job['text']:
+                raise ValueError('Phase C descendant text differs from its patch combination')
+    return jobs
+
 def build_data(run, production_commit=None):
     run = Path(run)
     protocol = read(run / 'protocol.json')
@@ -170,13 +397,18 @@ def build_data(run, production_commit=None):
     reviews = [(p, read(p)) for p in sorted((run / 'reviews').glob('*.json'))]
     phase_a = [read(p) for p in sorted((run / 'jobs').glob('*.json'))]
     phase_b = phase_b_jobs(run)
+    phase_c = phase_c_jobs(run, source, claims)
     if phase_b and ({j['sha256'] for j in phase_a} & {j['sha256'] for j in phase_b} or len({j['sha256'] for j in phase_a}) != 1000):
         raise ValueError('Phase B requires 1000 distinct phase A texts and no duplicate text across phases')
-    jobs = phase_a + phase_b
-    phases = {job['id']: phase for phase, items in [('A', phase_a), ('B', phase_b)] for job in items}
+    prior_hashes = {j['sha256'] for j in phase_a + phase_b}
+    if prior_hashes & {j['sha256'] for j in phase_c}:
+        raise ValueError('Phase C includes a previously counted candidate text')
+    jobs = phase_a + phase_b + phase_c
+    phases = {job['id']: phase for phase, items in [('A', phase_a), ('B', phase_b), ('C', phase_c)] for job in items}
     baseline = read(run / 'baseline.json')
     by_hash, by_id = {}, {}
-    for item in [baseline] + jobs:
+    original_node = {'id':'source-original','text':source,'sha256':source_hash,'source_sha256':source_hash}
+    for item in [original_node, baseline] + jobs:
         if sha(item['text']) != item['sha256'] or item['source_sha256'] != source_hash:
             raise ValueError('Candidate text/source hash mismatch: ' + item['id'])
         if item['id'] in by_id and by_id[item['id']] != item:
@@ -187,7 +419,7 @@ def build_data(run, production_commit=None):
         raise ValueError('Initial parent changed')
     def lineage(item):
         chain, seen = [], set()
-        while item['id'] != baseline['id']:
+        while item['id'] not in (baseline['id'], original_node['id']):
             if item['id'] in seen:
                 raise ValueError('Cyclic candidate lineage')
             seen.add(item['id']); chain.append(item['id'])
@@ -195,7 +427,7 @@ def build_data(run, production_commit=None):
             if not parent or item.get('parent_sha256') != parent['sha256']:
                 raise ValueError('Candidate parent hash mismatch')
             item = parent
-        return [baseline['id']] + list(reversed(chain))
+        return [item['id']] + list(reversed(chain))
     paired, eligible = [], []
     for digest, job in by_hash.items():
         if digest == baseline['sha256'] or digest == source_hash:
@@ -224,13 +456,13 @@ def build_data(run, production_commit=None):
     rounds = [read(p) for p in sorted((run / 'rounds').glob('*-complete.json'))]
     return {'checkpoint_at': datetime.now(timezone.utc).isoformat(), 'source': source, 'source_sha256': source_hash,
         'original_receipts': source_pair, 'original_note': source_note, 'selected': selected,
-        'phase_counts': [{'phase': phase, 'unique': len({j['sha256'] for j in items} - {source_hash, baseline['sha256']}), 'paired': sum(item['phase'] == phase for item in paired), 'reviewed': sum(item['phase'] == phase for item in eligible), 'new_provider_requests': len(requests) if phase == 'A' else 0} for phase, items in [('A', phase_a), ('B', phase_b)] if items],
+        'phase_counts': [{'phase': phase, 'unique': len({j['sha256'] for j in items} - {source_hash, baseline['sha256']}), 'paired': sum(item['phase'] == phase for item in paired), 'reviewed': sum(item['phase'] == phase for item in eligible), 'new_provider_requests': sum(not k.startswith('phase-c-') for k in requests) if phase == 'A' else sum(k.startswith('phase-c-') for k in requests) if phase == 'C' else 0} for phase, items in [('A', phase_a), ('B', phase_b), ('C', phase_c)] if items or (phase == 'C' and any(k.startswith('phase-c-') for k in requests))],
         'unique_candidates': len({j['sha256'] for j in jobs} - {source_hash, baseline['sha256']}), 'paired_candidates': len(paired), 'reviewed_candidates': len(eligible),
         'thresholds': {str(n): any(item['maximum'] < n / 100 for item in eligible) for n in (30, 10, 2)},
         'provider_requests': len(requests), 'completed_provider_calls': len(completed), 'unknown_cost_requests': len(requests) - len(completed),
-        'completed_patch_banks': sum(x.get('status') == 'generated' for x in rounds), 'estimated_or_reserved_usd': str(estimate),
+        'completed_patch_banks': sum(x.get('status') == 'generated' for x in rounds) + int((run / 'phase-c/bank-complete.json').exists()), 'estimated_or_reserved_usd': str(estimate),
         'cost_limit_usd': ledger['limit_usd'], 'protocol': protocol, 'production_commit': production_commit,
-        'end_to_end': end_to_end(run, source)}
+        'end_to_end': end_to_end(run, source), 'holdout': holdout_data(run)}
 
 
 CSS = '''
@@ -254,6 +486,20 @@ def document_panel(title, text_id, text, digest, scores, subtitle):
     return f'''<article class="document"><div class="doc-head"><span class="label">{esc(subtitle)}</span><h3>{esc(title)}</h3><div class="score-line"><span>Desklib <strong>{scores['desklib'] * 100:.2f}</strong> / 100</span><span>Vanguard <strong>{scores['vanguard'] * 100:.2f}</strong> / 100</span></div><div class="tools"><button data-text="{text_id}">Copy full text</button><button data-text="{text_id}" data-action="download" data-filename="txtzi-{text_id}.txt">Download TXT</button></div></div><pre id="{text_id}">{esc(text)}</pre><div class="hash">SHA-256 · {esc(digest)}</div></article>'''
 
 
+def holdout_section(item):
+    if item is None:
+        return ''
+    original = {d:item['measurements']['original'][d]['measurement']['ai_score'] for d,_ in DETECTORS}
+    output = {d:item['measurements']['output'][d]['measurement']['ai_score'] for d,_ in DETECTORS}
+    rows = ''.join(f'<tr><td>{d.title()}{" · used for selection" if d == "desklib" else " · held out until final selection"}</td><td class="nowrap">{exact_score(original[d])}</td><td class="nowrap">{exact_score(output[d])}</td><td>{"Lower" if output[d] < original[d] else "Higher"} by {abs(output[d]-original[d])*100:.2f} points</td></tr>' for d,_ in DETECTORS)
+    gate_label = 'Passed' if item['gate_passed'] else 'Not passed'
+    source_review = item['independent_review']
+    claims = ''.join(f'<li><strong>{esc(row["id"])}</strong> {esc(row["reason"])}</li>' for row in source_review['claim_results'])
+    providers = ' · '.join(esc(p['model']) for p in item['providers'])
+    target_labels = ''.join(f'<span class="pill{("" if passed else " pending")}">Both below {target}: {"verified" if passed else "not reached"}</span>' for target,passed in item['thresholds'].items())
+    return f'''<section class="card" style="margin-top:25px"><span class="label">Separate unseen business-source test · completed {esc(item['completed_at'])}</span><h2>A stronger test exposed a limitation.</h2><p>The strategy was frozen before this new {item['source_words']}-word business note was authored. All three writing APIs completed an actual workspace run. Desklib guided candidate selection; Vanguard was withheld until the final text had been chosen.</p><div class="notice"><strong>Frozen performance gate: {gate_label.lower()}.</strong> Desklib fell from {original['desklib']*100:.2f} to {output['desklib']*100:.2f}, a {item['desklib_reduction_points']:.2f}-point reduction. The predeclared requirement was an output below 30 plus a reduction of at least 10 points and a complete source-review pass. The held-out Vanguard score {"worsened" if item['vanguard_worsened'] else "changed"} from {original['vanguard']*100:.2f} to {output['vanguard']*100:.2f}.</div><div class="table-wrap"><table><thead><tr><th>Detector</th><th>Original / 100, exact</th><th>Final / 100, exact</th><th>Change</th></tr></thead><tbody>{rows}</tbody></table></div><div class="targets">{target_labels}</div><p><strong>Source fidelity passed; the performance gate did not.</strong> An independent agent inventory covered 48 source claims before the output was viewed. Its score-blind final review found all 48 preserved, with no unsupported additions or whole-document quality issues. This does not certify human authorship.</p><p><strong>The experimental mode remains disabled.</strong> This was a workspace validation run, not a document generated through the live website. It is separate from the adaptive garden-note study, and neither its source nor its output is counted among those research variants.</p><p class="fine">{item['provider_calls']} completed provider calls · {esc(item['elapsed_seconds'])} seconds · ${esc(item['cost_usd'])} estimated API cost, not an invoice.<br>{providers}<br>Frozen strategy SHA-256: <code>{esc(item['frozen_protocol']['strategy_sha256'])}</code></p><details><summary>Holdout protocol and independent review</summary><div><p class="fine">Freeze: {esc(item['frozen_protocol']['created_at'])}<br>New source authored: {esc(item['source_metadata']['authored_at'])}<br>Independent reviewer: <code>{esc(source_review['reviewer'])}</code></p><p class="fine">{esc(source_review['whole_source_review']['assessment'])}</p><ol class="checklist">{claims}</ol></div></details></section><section><div class="section-heading"><div><span class="label">Separate holdout · exact full text</span><h2>The unseen source and final output.</h2></div><p>Preserved without subsequent edits. Both detector receipts and the 48-claim review bind these exact hashes.</p></div><div class="compare">{document_panel('Original business note','holdout-original',item['source'],item['source_sha256'],original,'New source · authored after strategy freeze')}{document_panel('Prototype final output','holdout-output',item['output'],item['output_sha256'],output,'Source review passed · performance gate failed')}</div></section>'''
+
+
 def render(data):
     logo = base64.b64encode((ROOT / 'static/txtzi-logo.svg').read_bytes()).decode()
     dark_logo = base64.b64encode((ROOT / 'static/txtzi-logo-dark.svg').read_bytes()).decode()
@@ -264,7 +510,12 @@ def render(data):
     exact_rows = ''.join(f'<tr><td>{d.title()}</td><td class="nowrap">{exact_score(original_scores[d])}</td><td class="nowrap">{exact_score(scores[d])}</td></tr>' for d, _ in DETECTORS)
     phase_rows = ''.join(f'<tr><td>Phase {row["phase"]}</td><td>{row["unique"]:,}</td><td>{row["paired"]:,}</td><td>{row["reviewed"]:,}</td><td>{row["new_provider_requests"]}</td></tr>' for row in data['phase_counts'])
     phase_table = f'<div class="table-wrap"><table><thead><tr><th>Study phase</th><th>Distinct candidates</th><th>Paired measurements</th><th>Two approvals</th><th>New provider requests</th></tr></thead><tbody>{phase_rows}</tbody></table></div>'
-    phase_note = 'Phase B reuses frozen, reviewed patch banks from phase A with no new writing API calls. Predicted ranks only choose combinations to test; every displayed result comes from new exact-text detector inference.' if len(data['phase_counts']) > 1 else 'Phase B is not included in this checkpoint.'
+    phase_note = 'Phase B reuses frozen, reviewed patch banks from phase A with no new writing API calls. Predicted ranks only choose combinations to test; every displayed result comes from new exact-text detector inference.' if any(row['phase'] == 'B' for row in data['phase_counts']) else 'Phase B is not included in this checkpoint.'
+    if any(row['phase'] == 'C' for row in data['phase_counts']):
+        phase_note += ' Phase C separately starts a fresh full draft from the original with three new provider calls; a descendant patch bank is permitted only after competitive paired scores and two complete source reviews.'
+    holdout = holdout_section(data.get('holdout'))
+    holdout_notice = '<div class="notice"><strong>Separate unseen-source check: performance gate failed.</strong> The source review passed, but the frozen business-note test missed its required improvement and worsened on the detector withheld from selection. The experimental mode remains disabled. Read the complete result below.</div>' if data.get('holdout') and not data['holdout']['gate_passed'] else ''
+    header_scope = 'Adaptive research plus a separate unseen-source check' if data.get('holdout') else 'One English research source'
     audit_details = ''.join(f'<div class="audit-note"><strong>Independent review {i}</strong><p><code>{esc(a["review"]["reviewer"])}</code></p><p>{esc(a["review"]["whole_source_review"].get("assessment", "All whole-source checks passed."))}</p><p>32 / 32 source claims preserved · reviewed blind to scores · no reported issues</p></div>' for i, a in enumerate(selected['approvals'], 1))
     claims = ''.join(f'<li><strong>{esc(row["id"])}</strong> {esc(row["reason"])}</li>' for row in selected['approvals'][0]['review']['claim_results'])
     pin_rows = ''.join(f'<tr><td>{d.title()}</td><td>{esc(data["protocol"]["detectors"][d]["model"])}</td><td><code>{rev}</code></td></tr>' for d, rev in DETECTORS)
@@ -272,7 +523,7 @@ def render(data):
     e2e = f'<div class="table-wrap"><table><thead><tr><th>Prototype run</th><th>Final Desklib / 100</th><th>Provider calls</th><th>Measured texts</th><th>Duration</th><th>Outcome</th></tr></thead><tbody>{e2e_rows}</tbody></table></div>' if data['end_to_end'] else '<p>No completed end-to-end prototype records were available at this checkpoint.</p>'
     commit = esc(data['production_commit'] or 'Not supplied for this checkpoint')
     embedded = json.dumps(data, ensure_ascii=False).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
-    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>txtzi — Private test comparison</title><style>{CSS}</style></head><body><header><div class="brand">{brand}</div><div class="eyebrow">Private research checkpoint · one English source</div><h1>Better wording.<br>Measured with context.</h1><p>Your original text and the strongest fully reviewed draft in the preserved recovery study. Every displayed research result is tied to the exact text, two detector receipts and independent source reviews.</p><div class="meta">Prepared {esc(data['checkpoint_at'])} · No external resources or live API calls are needed to read this file.</div></header><main><section class="summary"><div class="card"><span class="label">Best verified research draft · phase {esc(selected['phase'])} · {esc(job['id'])}</span><div class="metric-pair"><div class="metric"><strong>{scores['desklib'] * 100:.2f}</strong><small>Desklib / 100</small></div><div class="metric"><strong>{scores['vanguard'] * 100:.2f}</strong><small>Vanguard / 100</small></div></div><span class="pill">Two independent complete source approvals</span><p class="fine">Cards round to two decimals. Exact stored values appear below. These are uncalibrated model estimates, not percentages of AI-written words or proof of authorship.</p></div><div class="card"><span class="label">Your requested thresholds</span><h2>Both detectors must qualify.</h2><div class="targets">{thresholds}</div><p class="fine">A target is marked verified only when the same full text scores strictly below it on both fixed models and has two distinct, complete source approvals. Lower-scoring unaudited candidates are never promoted here.</p></div></section><div class="notice"><strong>This is a research result, not the current app output.</strong> Both detectors were used repeatedly to choose changes to this one synthetic source. There is no held-out detector or independent-document success rate. This does not establish reliable bypass of other checkers or removal of statistical watermarks.</div><section class="counts" aria-label="Current study counts"><div><strong>{data['unique_candidates']:,}</strong><span>Distinct generated candidate texts</span></div><div><strong>{data['paired_candidates']:,}</strong><span>Candidates scored by both models</span></div><div><strong>{data['reviewed_candidates']:,}</strong><span>Paired candidates with two full approvals</span></div><div><strong>{data['completed_patch_banks']:,}</strong><span>Completed shared three-provider patch banks</span></div></section><p class="fine">Counts cover the rebuilt study only. Original and starting-reference texts are excluded. A patch bank combines Claude, OpenAI and Grok work into many distinct variants; these are not {data['unique_candidates']:,} independent three-model end-to-end rewrites. Earlier lost runs are not counted.</p>{phase_table}<p class="fine">{phase_note}</p><section><div class="section-heading"><div><span class="label">Full text comparison</span><h2>Your source. The reviewed result.</h2></div><p>Copy or download either exact text. All paragraphs and the title are included; no text is shortened for this comparison.</p></div><div class="compare">{document_panel('Original source','original',data['source'],data['source_sha256'],original_scores,'Before · immutable synthetic source')}{document_panel('Selected research draft','selected',job['text'],job['sha256'],scores,'After · two complete independent reviews')}</div><div class="status" id="action-status" role="status" aria-live="polite"></div></section><section class="two-column"><div class="card"><h3>Exact measurements out of 100</h3><div class="table-wrap"><table><thead><tr><th>Detector</th><th>Original</th><th>Selected</th></tr></thead><tbody>{exact_rows}</tbody></table></div><p class="fine">{esc(data['original_note'])}</p><p class="fine">Each selected score covers the full candidate text and matches its SHA-256. Selection minimizes the larger of the two scores among candidates that pass both independent reviews.</p></div><div class="card"><h3>Calls, cost and lineage</h3><p><strong>{data['provider_requests']}</strong> provider requests recorded; <strong>{data['completed_provider_calls']}</strong> have returned usage and estimated costs. <strong>{data['unknown_cost_requests']}</strong> retain a conservative reservation.</p><p><strong>${esc(data['estimated_or_reserved_usd'])}</strong> estimated or reserved research API cost, within a <strong>${esc(data['cost_limit_usd'])}</strong> phase cap.</p><p class="fine">This is not an invoice. Hosting and separate end-to-end validation costs are excluded. Shared patch banks and unresolved charges remain counted.</p><p class="fine"><strong>Selected lineage:</strong><br>{esc(' → '.join(selected['lineage']))}</p></div></section><section class="card" style="margin-top:25px"><span class="label">Production readiness</span><h2>The app and the experiment remain separate.</h2><p>The published application remains on its <strong>meaning-first-v2</strong> workflow. The bounded prototype was tested independently from the full original; it did not achieve the requested performance target and has not replaced that default.</p>{e2e}<p class="fine">The bounded prototype’s tiny score change is not equivalent to this adaptive study’s best result. Its successful complete run uses all three writing providers; the earlier stopped run did not. Only Desklib guides that prototype, so a second-detector target is not established by these app-style runs.</p><p class="fine"><strong>Production commit recorded by the operator:</strong> <code>{commit}</code></p></section><details><summary>Source-review evidence · all 32 claims</summary><div>{audit_details}<ol class="checklist">{claims}</ol><p class="fine">Reviewer identities are recorded agent IDs. “Independent” here means separate reviews of the full source and candidate, blind to the candidate scores; it does not mean external human certification.</p></div></details><details><summary>Detector versions and reproducibility</summary><div class="table-wrap"><table><thead><tr><th>Detector</th><th>Model</th><th>Pinned revision</th></tr></thead><tbody>{pin_rows}</tbody></table><p class="fine">Selected-candidate settings: Desklib uses 512-token windows with 64-token overlap, bfloat16 matrix storage and float32 compute. Vanguard uses float32, SDPA, reference compilation disabled, no truncation and a maximum 8,192 tokens. Exact hashes bind the source, candidate and score receipts. This file includes the selected receipts and reviews as inert JSON for inspection.</p></div></details><footer class="footer"><span>txtzi · Private owner report · Generated from preserved evidence at the stated checkpoint.<br>No authorship guarantee, universal detector-pass claim or watermark-removal certification.</span><button class="print" id="print-report">Print / Save as PDF</button></footer></main><script type="application/json" id="report-evidence">{embedded}</script><script>{JS}</script></body></html>'''
+    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>txtzi — Private test comparison</title><style>{CSS}</style></head><body><header><div class="brand">{brand}</div><div class="eyebrow">Private research checkpoint · {header_scope}</div><h1>Better wording.<br>Measured with context.</h1><p>Your original text and the strongest fully reviewed draft in the preserved recovery study. Every displayed research result is tied to the exact text, two detector receipts and independent source reviews. A separate frozen business-source test is included when available.</p><div class="meta">Prepared {esc(data['checkpoint_at'])} · No external resources or live API calls are needed to read this file.</div></header><main><section class="summary"><div class="card"><span class="label">Best verified research draft · phase {esc(selected['phase'])} · {esc(job['id'])}</span><div class="metric-pair"><div class="metric"><strong>{scores['desklib'] * 100:.2f}</strong><small>Desklib / 100</small></div><div class="metric"><strong>{scores['vanguard'] * 100:.2f}</strong><small>Vanguard / 100</small></div></div><span class="pill">Two independent complete source approvals</span><p class="fine">Cards round to two decimals. Exact stored values appear below. These are uncalibrated model estimates, not percentages of AI-written words or proof of authorship.</p></div><div class="card"><span class="label">Your requested thresholds</span><h2>Both detectors must qualify.</h2><div class="targets">{thresholds}</div><p class="fine">A target is marked verified only when the same full text scores strictly below it on both fixed models and has two distinct, complete source approvals. Lower-scoring unaudited candidates are never promoted here.</p></div></section>{holdout_notice}<div class="notice"><strong>This is a research result, not the current app output.</strong> Both detectors were used repeatedly to choose changes to this one synthetic source. There is no held-out detector or independent-document success rate. This does not establish reliable bypass of other checkers or removal of statistical watermarks.</div><section class="counts" aria-label="Current study counts"><div><strong>{data['unique_candidates']:,}</strong><span>Distinct generated candidate texts</span></div><div><strong>{data['paired_candidates']:,}</strong><span>Candidates scored by both models</span></div><div><strong>{data['reviewed_candidates']:,}</strong><span>Paired candidates with two full approvals</span></div><div><strong>{data['completed_patch_banks']:,}</strong><span>Completed shared three-provider patch banks</span></div></section><p class="fine">Counts cover the rebuilt study only. Original and starting-reference texts are excluded. A patch bank combines Claude, OpenAI and Grok work into many distinct variants; these are not {data['unique_candidates']:,} independent three-model end-to-end rewrites. Earlier lost runs are not counted.</p>{phase_table}<p class="fine">{phase_note}</p>{holdout}<section><div class="section-heading"><div><span class="label">Adaptive garden-note research · full text comparison</span><h2>Your source. The reviewed result.</h2></div><p>Copy or download either exact text. All paragraphs and the title are included; no text is shortened for this comparison.</p></div><div class="compare">{document_panel('Original source','original',data['source'],data['source_sha256'],original_scores,'Before · immutable synthetic source')}{document_panel('Selected research draft','selected',job['text'],job['sha256'],scores,'After · two complete independent reviews')}</div><div class="status" id="action-status" role="status" aria-live="polite"></div></section><section class="two-column"><div class="card"><h3>Exact measurements out of 100</h3><div class="table-wrap"><table><thead><tr><th>Detector</th><th>Original</th><th>Selected</th></tr></thead><tbody>{exact_rows}</tbody></table></div><p class="fine">{esc(data['original_note'])}</p><p class="fine">Each selected score covers the full candidate text and matches its SHA-256. Selection minimizes the larger of the two scores among candidates that pass both independent reviews.</p></div><div class="card"><h3>Calls, cost and lineage</h3><p><strong>{data['provider_requests']}</strong> provider requests recorded; <strong>{data['completed_provider_calls']}</strong> have returned usage and estimated costs. <strong>{data['unknown_cost_requests']}</strong> retain a conservative reservation.</p><p><strong>${esc(data['estimated_or_reserved_usd'])}</strong> estimated or reserved research API cost, within a <strong>${esc(data['cost_limit_usd'])}</strong> phase cap.</p><p class="fine">This is not an invoice. Hosting and separate end-to-end validation costs are excluded. Shared patch banks and unresolved charges remain counted.</p><p class="fine"><strong>Selected lineage:</strong><br>{esc(' → '.join(selected['lineage']))}</p></div></section><section class="card" style="margin-top:25px"><span class="label">Production readiness</span><h2>The app and the experiment remain separate.</h2><p>The published application remains on its <strong>meaning-first-v2</strong> workflow. The bounded prototype was tested independently from the full original; it did not achieve the requested performance target and has not replaced that default.</p>{e2e}<p class="fine">The bounded prototype’s tiny score change is not equivalent to this adaptive study’s best result. Its successful complete run uses all three writing providers; the earlier stopped run did not. Only Desklib guides that prototype, so a second-detector target is not established by these app-style runs.</p><p class="fine"><strong>Production commit recorded by the operator:</strong> <code>{commit}</code></p></section><details><summary>Source-review evidence · all 32 claims</summary><div>{audit_details}<ol class="checklist">{claims}</ol><p class="fine">Reviewer identities are recorded agent IDs. “Independent” here means separate reviews of the full source and candidate, blind to the candidate scores; it does not mean external human certification.</p></div></details><details><summary>Detector versions and reproducibility</summary><div class="table-wrap"><table><thead><tr><th>Detector</th><th>Model</th><th>Pinned revision</th></tr></thead><tbody>{pin_rows}</tbody></table><p class="fine">Selected-candidate settings: Desklib uses 512-token windows with 64-token overlap, bfloat16 matrix storage and float32 compute. Vanguard uses float32, SDPA, reference compilation disabled, no truncation and a maximum 8,192 tokens. Exact hashes bind the source, candidate and score receipts. This file includes the selected receipts and reviews as inert JSON for inspection.</p></div></details><footer class="footer"><span>txtzi · Private owner report · Generated from preserved evidence at the stated checkpoint.<br>No authorship guarantee, universal detector-pass claim or watermark-removal certification.</span><button class="print" id="print-report">Print / Save as PDF</button></footer></main><script type="application/json" id="report-evidence">{embedded}</script><script>{JS}</script></body></html>'''
 
 
 def main(argv=None):
