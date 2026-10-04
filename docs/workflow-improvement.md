@@ -31,4 +31,15 @@ The offline suite exercises source review failure, incorrect hashes, omitted inv
 
 Live validation records are under `test-artifacts/recovery-oct4/production-e2e-*` while running. The first test ($0.030212 estimated provider spend) exposed a complete factual inventory that omitted the immutable title. The app retained the original. The title handling and provider schema/accounting problems were corrected before the second test. The first test is retained as a failed experiment, not counted as an improved output.
 
+The second test completed on the original 373-word garden-plan source using all three providers and thirteen local measurements (original plus twelve variants). Grok approved the selected output against all 21 inventory items, with no repairs. Its exact hash was `c24dadb4a2ada35c7be49f73962ea4d9706518314bcabb94b6c9dab4cbbfb26f`.
+
+| Measurement | Local detector estimate |
+| --- | ---: |
+| Original | 0.9999592304229736 |
+| Selected output | 0.9999356269836426 |
+
+Both are approximately 99.99%. The difference is too small to present as a useful improvement. **The new bounded workflow did not meet the under-30 or under-10 performance goal, and remains disabled for production quotes.** This test validates the calls, source review, exact-text measurement and failure boundaries, not effectiveness at reducing this detector's estimate.
+
+The second test took 125.253 seconds in the shared research workspace (not a Render performance measurement) and used an estimated $0.054144 in provider tokens. Total new live workflow validation spend across both tests was $0.084356, excluding the independent research series and infrastructure.
+
 This production workflow selects against **one** local detector. Earlier research selected across **two** detectors with many more variants on one garden-plan source. Its scores cannot be assigned to this workflow, to different text, or to ordinary customer documents. Neither the historical experiment nor one successful live workflow test establishes a general success rate or an under-10 guarantee.

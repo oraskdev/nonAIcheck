@@ -213,6 +213,7 @@ def parent_approvals(parent, source_hash, claims):
     reviewers.discard(None)
     if len(reviewers) < 2:
         raise ValueError("Parent requires two distinct complete hash-bound source reviews")
+    return sorted(reviewers)
 
 
 def valid_patch(parent, patch):
@@ -265,11 +266,15 @@ def generate(round_number, parent_path, allow_api, direction=""):
         "task": "First review the COMPLETE current text against ALL32 original source claims, accepting faithful paraphrase/reordering. Then consider EACH patch independently when applied to current text. Reject meaning changes, missing uncertainty/conditions/causality, unsupported additions or defective prose. Return {baseline_faithful:boolean,baseline_issues:[string],checked_claim_ids:[all32 IDs],patches:[{id,faithful:boolean,issues:[string]}]}. Do not change text or invent patches."}, ensure_ascii=False), allow_api)
     save(RUN / "rounds" / (prefix + "-review.json"), review)
     expected = {c["id"] for c in claims}
-    if review.get("baseline_faithful") is not True or review.get("baseline_issues") or set(review.get("checked_claim_ids", [])) != expected:
+    if (review.get("baseline_faithful") is not True or review.get("baseline_issues") or
+        len(review.get("checked_claim_ids", [])) != 32 or set(review.get("checked_claim_ids", [])) != expected):
         save(RUN / "rounds" / (prefix + "-complete.json"), {"status": "baseline_fidelity_rejected", "parent": parent["id"], "at": now()})
         print(prefix, "baseline rejected; no candidates generated", flush=True)
         return
-    reviewed = {r["id"]: r for r in review.get("patches", [])}
+    reviewed_rows = review.get("patches", [])
+    reviewed = {r["id"]: r for r in reviewed_rows}
+    if len(reviewed) != len(reviewed_rows) or set(reviewed) != {p["id"] for p in patches}:
+        raise ValueError("Patch review identity set differs from submitted patch bank")
     patches = [p for p in patches if reviewed.get(p["id"], {}).get("faithful") is True and not reviewed[p["id"]].get("issues")]
     save(RUN / "rounds" / (prefix + "-bank.json"), {"parent": parent, "patches": patches, "source_sha256": sha(source)})
     rng = random.Random(6100400 + round_number)
@@ -315,10 +320,12 @@ def generate(round_number, parent_path, allow_api, direction=""):
         save(RUN / "rounds" / (prefix + "-complete.json"), {"status": "generated", "parent": parent["id"],
             "accepted_patches": len(patches), "candidates": made, "shared_provider_calls": 3, "at": now()})
     print(prefix, len(patches), "patches;", len(made), "new distinct texts", flush=True)
+    archive()
 
 
 def status():
     all_scores = []
+    source, claims = bound_source()
     for p in sorted((RUN / "jobs").glob("*.json")):
         j = read(p)
         if sha(j["text"]) != j["sha256"] or j.get("source_sha256") != sha((RUN / "source.txt").read_text()):
@@ -330,15 +337,35 @@ def status():
         for detector, revision, x in zip(("desklib", "vanguard"), (DESK_REV, VANG_REV), measurements):
             validate_score(x, j["sha256"], detector, revision)
         d, v = [x["measurement"]["ai_score"] for x in measurements]
+        try:
+            reviewers = parent_approvals(j, sha(source), claims)
+        except ValueError:
+            reviewers = []
         all_scores.append({"id": j["id"], "sha256": j["sha256"], "desklib": d, "vanguard": v,
-                           "maximum": max(d, v), "review": "pending"})
+                           "maximum": max(d, v), "review": "source_verified" if reviewers else "pending",
+                           "source_reviewers": reviewers})
     all_scores.sort(key=lambda x: x["maximum"])
     result = {"at": now(), "unique_generated": len(list((RUN / "jobs").glob("*.json"))), "paired": len(all_scores),
               "estimated_or_reserved_api_usd": cost(ledger()), "budget_usd": LIMIT_USD,
               "best": all_scores[:20], "below_both_30": sum(s["maximum"] < .30 for s in all_scores),
               "below_both_10": sum(s["maximum"] < .10 for s in all_scores),
-              "below_both_2": sum(s["maximum"] < .02 for s in all_scores), "scores": all_scores}
+              "below_both_2": sum(s["maximum"] < .02 for s in all_scores),
+              "threshold_count_notice": "Raw score counts remain provisional until two complete independent source approvals.",
+              "verified_below_both_30": sum(s["maximum"] < .30 and s["review"] == "source_verified" for s in all_scores),
+              "verified_below_both_10": sum(s["maximum"] < .10 and s["review"] == "source_verified" for s in all_scores),
+              "verified_below_both_2": sum(s["maximum"] < .02 and s["review"] == "source_verified" for s in all_scores),
+              "selected_verified": next((s for s in all_scores if s["review"] == "source_verified"), None), "scores": all_scores}
     save(RUN / "status.json", result)
+    for label, threshold in ((30, .30), (10, .10), (2, .02)):
+        gate = RUN / f"verified-gate-{label}.json"
+        selected = next((s for s in all_scores if s["maximum"] < threshold and s["review"] == "source_verified"), None)
+        if selected and not gate.exists():
+            job = read(RUN / "jobs" / (selected["id"] + ".json"))
+            save(gate, {"verified_at": now(), "threshold": threshold, "criterion": "Both exact full-text scores strictly below threshold plus two independent complete source reviews",
+                "selected": selected, "job": job, "source_sha256": sha(source),
+                "paired_at_checkpoint": len(all_scores), "generated_at_checkpoint": result["unique_generated"],
+                "measurements": {detector: read(RUN / "scores" / detector / (job["sha256"] + ".json")) for detector in ("desklib", "vanguard")},
+                "scope": "One synthetic source; both detectors used in adaptive selection, no held-out or production-generalization claim."})
     print(json.dumps({k: v for k, v in result.items() if k != "scores"}, ensure_ascii=False, indent=2))
     return result
 
@@ -395,8 +422,11 @@ def archive():
         files[str(p.relative_to(ROOT))] = p.read_text()
     out = RUN / "checkpoints/txtzi-research-evidence.json.gz"
     out.parent.mkdir(parents=True, exist_ok=True)
-    with gzip.GzipFile(filename=str(out), mode="wb", mtime=0) as f:
-        f.write(json.dumps({"created_at": now(), "records": files}, ensure_ascii=False).encode())
+    temporary = out.with_name(out.name + ".tmp")
+    with locked():
+        with gzip.GzipFile(filename=str(temporary), mode="wb", mtime=0) as f:
+            f.write(json.dumps({"created_at": now(), "records": files}, ensure_ascii=False).encode())
+        temporary.replace(out)
     print("Checkpoint", len(files), "records", out.stat().st_size, "bytes")
 
 

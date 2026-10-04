@@ -22,16 +22,23 @@ def download(which):
     print(which, "pinned model downloaded", flush=True)
 
 
-def worker(which, shard, count, seconds):
+def worker(which, shard, count, seconds, phase="A", reference_only=False):
     model = tokenizer = torch = None
     started = time.monotonic()
     directory = RUN / "models" / which
     revision = DESK_REV if which == "desklib" else VANG_REV
     while time.monotonic() - started < seconds and not (RUN / "stop-scoring").exists():
         pending = False
-        paths = [RUN / "baseline.json", *(RUN / "jobs").glob("*.json")]
-        for path in sorted(paths):
-            j = read(path)
+        job_directory = RUN / "jobs" if phase == "A" else RUN / "phase-b/jobs"
+        original = RUN / "source-original.json"
+        paths = [original] if reference_only else [RUN / "baseline.json", *([original] if original.exists() else []), *job_directory.glob("*.json")]
+        jobs = [read(path) for path in paths]
+        # Admission order only; inference, exact text and coverage are unchanged.
+        # New-bank singles allow adaptive selection while older combinations drain.
+        jobs.sort(key=lambda j: (len(j.get("patch_ids", [])) != 1, -j.get("round", 0), j["id"]))
+        for j in jobs:
+            if (RUN / "stop-scoring").exists():
+                return
             digest = j["sha256"]
             if sha(j["text"]) != digest:
                 raise ValueError("Text hash differs from job identity")
@@ -74,17 +81,20 @@ def worker(which, shard, count, seconds):
             validate_score(record, digest, which, revision)
             save(out, record)
             print(which, j["id"], round(measurement["ai_score"], 7), flush=True)
+        if reference_only:
+            return
         if not pending:
             time.sleep(2)
 
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
-    p.add_argument("action", choices=["download", "worker"])
+    p.add_argument("action", choices=["download", "worker", "reference"])
     p.add_argument("detector", choices=["desklib", "vanguard"])
     p.add_argument("--shard", type=int, default=0)
     p.add_argument("--count", type=int, default=1)
     p.add_argument("--seconds", type=int, default=7200)
+    p.add_argument("--phase", choices=["A", "B"], default="A")
     a = p.parse_args()
     if a.action == "download": download(a.detector)
-    else: worker(a.detector, a.shard, a.count, a.seconds)
+    else: worker(a.detector, a.shard, a.count, a.seconds, a.phase, a.action == "reference")
